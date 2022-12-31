@@ -2,7 +2,7 @@
 #ifndef QUESTIONS_HPP
 #define QUESTIONS_HPP
 
-#include <array>
+#include <vector>
 #include <string>
 
 class Questions
@@ -10,7 +10,7 @@ class Questions
 private:
     enum
     {
-        NUMBER_OF_QUESTIONS = 3;
+        NUMBER_OF_QUESTIONS = 4
     };
 
 public:

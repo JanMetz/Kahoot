@@ -20,7 +20,7 @@ protected:
 
 private:
     double mPoints;
-    int mJoinedGameCode;
+    Game *mJoinedGame;
     bool mIfHost;
 };
 
