@@ -1,14 +1,16 @@
 #include "game.hpp"
+#include "message.hpp"
 
 #include <vector>
+#include <map>
+#include <array>
+
 #include <chrono>
 #include <string>
 #include <thread>
-#include <array>
 
-Game::Game(Players host)
+Game::Game(const long port, const std::string& addr) : Client(port, addr)
 {
-    mHost = host;
     setUp();
     auto th = std::thread(&Game::run, this);
     th.join();
@@ -17,7 +19,7 @@ Game::Game(Players host)
 void Game::setUp()
 {
     const int questionsNum = std::stoi(readIni("config.ini", "questions_per_game"));
-    const int timePerQuestion = std::stoi(readIni("config.ini", "seconds_per_question"));
+    mTimePerQuestion = std::stoi(readIni("config.ini", "seconds_per_question"));
 
     for (int i = 0; i < questionsNum; ++i)
     {
@@ -41,13 +43,6 @@ void Game::setUp()
 
         mQuestions.push_back(q);
     }
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(1, 10000);
-
-    mCode = distrib(gen);
-    printf("Your game code is %ld", mCode);
 }
 
 void Game::run()
@@ -58,22 +53,104 @@ void Game::run()
     }
 }
 
-int Game::getGameCode() const
+void Game::runTheGame()
 {
-    return mCode;
+    sendStartSignal();
+
+    for (const auto question : mQuestions)
+    {
+        broadcastNewQuestion(question);
+        mBroadcastTimepoint = std::chrono::high_resolution_clock::now();
+        waitForAnswers(question);
+        broadcastPunctation();
+    }
+
+    sendEndSignal();
 }
 
-std::vector<Players> Game::getRanking() const
+void Game::sendStartSignal()
 {
-    return std::vector<Players>();
+    blockIncomingPlayers();
+
+    Message msg;
+    msg.mAction = START_GAME;
+    msg.mSender = this;
+    sendMessage(msg);
 }
 
-double Game::calculatePoints(const std::chrono::time_point &timestamp, Player &player)
+void Game::sendEndSignal()
 {
+    Message msg;
+    msg.mAction = END_GAME;
+    msg.mSender = this;
+    sendMessage(msg);
+}
+
+void Game::blockIncomingPlayers()
+{
+    Message msg;
+    msg.mAction = CLOSE_TRAFFIC;
+    msg.mSender = this;
+    sendMessage(msg);
+}
+
+void Game::broadcastNewQuestion(const Question &question)
+{
+    Message msg;
+    msg.mAction = BROADCAST_QUESTION;
+    msg.mQuestion = &question;
+    msg.mSender = this;
+    sendMessage(msg);
+}
+
+void Game::broadcastPunctation()
+{
+    Message msg;
+    msg.mAction = BROADCAST_PUNCTATION;
+    msg.mPunctation = &mPunctation;
+    msg.mSender = this;
+    sendMessage(msg);
+}
+
+void Game::waitForAnswers(const Question& question) const
+{
+    using namespace std::chrono;
+
+    const int twoThirds = static_cast<int>(static_cast<double>(2 * mPlayers.size()) / 3);
+    int answersNum = 0;
+
+    const auto start = high_resolution_clock::now();
+    int elapsed = 0;
+
+    while (elapsed < mTimePerQuestion && answersNum < twoThirds)
+    {
+        std::chrono::duration<int> dur = high_resolution_clock::now() - start;
+        elapsed = dur.count();
+        auto msg = receiveMessage();
+        if (msg)
+        {
+            mPunctation[msg.mSender.getNick()] += calculatePoints(msg, question);
+            answersNum++;
+        }
+
+        std::this_thread::sleep_for(milliseconds(mTimePerQuestion * 1000 / 100));
+    }
+}
+
+double Game::calculatePoints(const Message &msg, const Question& question) const
+{
+    Question question;
+    if (question.isCorrectAnswer(msg.mAnswerBody))
+    {
+        std::chrono::duration<int> dur = msg.mTimestamp - mBroadcastTimepoint;
+
+        return ((mTimePerQuestion - dur.count()) / mTimePerQuestion) * 1000;
+    }
+
     return 0.0;
 }
 
-void Game::addPlayer(Players player)
+void Game::addPlayer(const std::string &nick)
 {
-    mPlayers.push_back(player);
+    mPunctation[nick] = 0;
 }

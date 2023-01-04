@@ -4,22 +4,21 @@
 
 #include <string>
 
-class Player
+class Player : public Client
 {
 public:
+    Player(const long port, const std::string& addr);
+
     void setNick(const std::string &nick);
     void getNick() const;
-    bool joinGame(const int code);
+    void requestToJoinAGame(const int code);
     void createGame();
     void leaveGame();
 
-    void run();
-
-protected:
-    std::string mNick;
+    void run() override;
 
 private:
-    double mPoints;
+    std::string mNick;
     Game *mJoinedGame;
     bool mIfHost;
 };
