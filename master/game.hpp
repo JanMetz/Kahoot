@@ -6,23 +6,36 @@
 #include "questions.hpp"
 
 #include <vector>
+#include <map>
+#include <string>
 #include <chrono>
 
-class Game
+class Message;
+
+class Game : public Client
 {
 public:
-    Game(Players host);
-    void setUp();
-    int getGameCode() const;
-    std::vector<Players> getRanking() const;
-    double calculatePoints(const std::chrono::time_point &timestamp, const std::string &playersNick);
+    Game(const long port, const std::string& addr);
+    void runTheGame();
+
 private:
-    std::chrono::time_point mQuestionDisplayedOn;
+    void setUp();
+    void waitForAnswers(const Question& question) const;
+    double calculatePoints(const Message &msg, const Question& question) const;
+    void addPlayer(const std::string& nick);
+    void run() override;
+
+    void sendStartSignal();
+    void sendEndSignal();
+    void blockIncomingPlayers();
+    void broadcastNewQuestion(const Question &question);
+    void broadcastPunctation();
+
+    std::chrono::time_point mBroadcastTimepoint;
+    int mTimePerQuestion;
     int mCode;
     std::vector<Questions> mQuestions;
-    std::vector<Players> mPlayers;
-
-    Players mHost;
+    std::vector<std::map<std::string, double>> mPunctation;
 };
 
 #endif

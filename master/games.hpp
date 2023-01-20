@@ -11,12 +11,10 @@ class Games
 public:
     void addGame(Game *gm);
     void removeDeletedGame();
-    std::vector<int> getGamesCodes() const;
+    Game* getGame(const int code) const;
 
 private:
-    std::vector<int> mGameCodes;
     std::vector<Game*> mGames;
-
 };
 
 #endif

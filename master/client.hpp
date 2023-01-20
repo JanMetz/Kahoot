@@ -4,15 +4,18 @@
 
 #include <string>
 
+class Message;
+
 class Client
 {
 public:
     Client(const long port, const std::string &addr);
-    void run();
-    bool openConnection();
-    void closeConnection();
-    void handleResponse();
-    void sendMessage();
+    ~Client();
+
+    virtual void run() = 0;
+    bool setupSocket();
+    Message receiveMessage();
+    void sendMessage(const Message &msg);
 };
 
 #endif

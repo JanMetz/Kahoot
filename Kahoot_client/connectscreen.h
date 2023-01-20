@@ -1,42 +1,38 @@
-#ifndef JOINQUIZ_H
-#define JOINQUIZ_H
+#ifndef CONNECTSCREEN_H
+#define CONNECTSCREEN_H
 
-#include <QMainWindow>
-#include <QWidget>
 #include <QTcpSocket>
+#include <QWidget>
+#include <QMainWindow>
 #include <QTimer>
 #include <QMessageBox>
-#include <QFile>
-#include <QIntValidator>
-
-#include "lobby.h"
+#include "startquiz.h"
 
 namespace Ui {
-class joinQuiz;
+class ConnectScreen;
 }
 
-class joinQuiz : public QWidget
+class ConnectScreen : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit joinQuiz(QMainWindow* m, QWidget *parent = nullptr);
-    ~joinQuiz();
+    explicit ConnectScreen(QMainWindow* m, int n, int t, QWidget *parent = nullptr);
+    ~ConnectScreen();
 public slots:
     void accept();
     void reject();
 private:
-    Ui::joinQuiz *ui;
+    Ui::ConnectScreen *ui;
     QMainWindow* mainWindow;
-    bool closeSocket;
-protected:
+    int numberOfQuestions;
+    int time;
     QTcpSocket * sock {nullptr};
     QTimer * connTimeoutTimer{nullptr};
-    void connectBtnHit();
     void socketConnected();
     void socketDisconnected();
     void socketError(QTcpSocket::SocketError);
     void socketReadable();
 };
 
-#endif // JOINQUIZ_H
+#endif // CONNECTSCREEN_H

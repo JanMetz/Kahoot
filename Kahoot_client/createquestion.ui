@@ -45,7 +45,7 @@
     <string>Next</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>50</x>
@@ -70,7 +70,7 @@
       <item>
        <widget class="QRadioButton" name="radioButtonC">
         <property name="text">
-         <string>RadioButton</string>
+         <string>             </string>
         </property>
         <attribute name="buttonGroup">
          <string notr="true">buttonGroup</string>
@@ -107,7 +107,7 @@
       <item>
        <widget class="QRadioButton" name="radioButtonB">
         <property name="text">
-         <string>RadioButton</string>
+         <string>             </string>
         </property>
         <attribute name="buttonGroup">
          <string notr="true">buttonGroup</string>
@@ -145,7 +145,7 @@
       <item>
        <widget class="QRadioButton" name="radioButtonA">
         <property name="text">
-         <string>RadioButton</string>
+         <string>             </string>
         </property>
         <attribute name="buttonGroup">
          <string notr="true">buttonGroup</string>
@@ -169,7 +169,7 @@
       <item>
        <widget class="QRadioButton" name="radioButtonD">
         <property name="text">
-         <string>RadioButton</string>
+         <string>             </string>
         </property>
         <attribute name="buttonGroup">
          <string notr="true">buttonGroup</string>

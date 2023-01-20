@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QMainWindow>
-#include "startquiz.h"
+#include "connectscreen.h"
 #include <QMessageBox>
 
 namespace Ui {

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QMainWindow>
+#include <QTcpSocket>
 #include "gamestate.h"
 
 namespace Ui {
@@ -14,7 +15,7 @@ class StartQuiz : public QWidget
     Q_OBJECT
 
 public:
-    explicit StartQuiz(QMainWindow* m, QWidget *parent = nullptr);
+    explicit StartQuiz(QMainWindow* m, QTcpSocket* s, int c, QWidget *parent = nullptr);
     ~StartQuiz();
 
 private:
@@ -22,6 +23,10 @@ private:
     QMainWindow* mainWindow;
     void addPlayer(QString player);
     void removePlayer(QString player);
+    QTcpSocket * sock ;
+    void socketDisconnected();
+    void socketReadable();
+    int code;
 };
 
 #endif // STARTQUIZ_H

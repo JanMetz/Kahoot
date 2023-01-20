@@ -6,7 +6,7 @@
 
 void Games::addGame(Game *gm)
 {
-
+    mGames.push_back(gm);
 }
 
 void Games::removeDeletedGame()
@@ -14,9 +14,15 @@ void Games::removeDeletedGame()
 
 }
 
-std::vector<int> Games::getGamesCodes() const
+Game* Games::getGame(const int code) const
 {
-    return std::vector<int>();
+    for (Game* game : mGames)
+    {
+        if (game->getGameCode() == code)
+            return game;
+    }
+
+    return nullptr;
 }
 
 

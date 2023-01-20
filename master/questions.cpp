@@ -4,27 +4,30 @@
 #include <string>
 
 
-Questions::Questions(const std::string &question, const std::array<std::string, NUMBER_OF_QUESTIONS> &answers)
+Questions::Questions(const std::string &question, const std::array<std::string, NUMBER_OF_QUESTIONS> &answers) : mAnswers(answers)
 {
 
 }
 
 std::array<std::string, NUMBER_OF_QUESTIONS> Questions::getAnswers() const
 {
-    return std::array<std::string, NUMBER_OF_QUESTIONS>();
+    return mAnswers;
 }
 
 std::string Questions::getCorrectAnswer() const
 {
-    return "";
+    return mAnswers[mCorrectAnswerIndex];
 }
 
 void Questions::setCorrectAnswerIndex(const int index)
 {
+    if (mCorrectAnswerIndex >= NUMBER_OF_QUESTIONS)
+        return;
 
+    mCorrectAnswerIndex = index;
 }
 
 bool Questions::isCorrectAnswer(const std::string &answer)
 {
-    return false;
+    return answer == getCorrectAnswer();
 }

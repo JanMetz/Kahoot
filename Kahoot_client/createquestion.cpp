@@ -42,7 +42,7 @@ createQuestion::createQuestion(QMainWindow* m, int n, int t, QWidget *parent) :
         ui->buttonGroup->button(answerId)->setChecked(false);
         ui->buttonGroup->setExclusive(true);
         if(questionNumber > numberOfQuestions) {
-            QWidget *wdg = new StartQuiz(mainWindow);
+            QWidget *wdg = new ConnectScreen(mainWindow, numberOfQuestions, time);
             wdg->show();
             this->close();
         }

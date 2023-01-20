@@ -37,6 +37,16 @@ Server::~Server()
     mDebugFile.close();
 }
 
+void dummy()
+{
+    /*std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 10000);
+
+    mCode = distrib(gen);
+    printf("Your game code is %ld", mCode);*/
+}
+
 bool Server::setupSocket()
 {
     mAddrStruct.sin_family = AF_INET;
