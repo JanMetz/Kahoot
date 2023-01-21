@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <string>
+#include <thread>
 #include <fstream>
 
 class Server
@@ -30,7 +31,8 @@ public:
         LEAVE_GAME = 9,
         CREATE_GAME = 10,
         SUCCESS = 11,
-        FAIL = 12
+        FAILURE = 12,
+        QUESTION_ANSWER = 13
     };
 
     Server(const long port, const std::string &addr);
@@ -40,10 +42,14 @@ public:
     void run();
     bool openConnection();
     void closeConnection();
-    void handleResponse(const sock fd);
+    void handleResponse(const int& fd);
     void sendMessage();
 
     bool acceptClient();
+
+    Question createQuestion() const;
+    void createGame(const int& clientsFd);
+    static int generateCode();
 
 private:
     socket mSock;
@@ -51,8 +57,9 @@ private:
     std::string mIpAddr;
     sockaddr_in mAddrStruct;
     std::vector<pollfd> mPolls;
+    std::vector<int> mCodes;
 
-    Games mGames;
+    std::map<int, Game> mGames;
 
     std::ofstream mDebugFile;
 };

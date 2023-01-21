@@ -19,7 +19,7 @@ public:
 
 private:
     std::string mNick;
-    Game *mJoinedGame;
+    int mJoinedGameCode;
     bool mIfHost;
 };
 

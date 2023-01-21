@@ -11,46 +11,11 @@
 
 Game::Game(const long port, const std::string& addr) : Client(port, addr)
 {
-    setUp();
-    auto th = std::thread(&Game::run, this);
-    th.join();
 }
 
-void Game::setUp()
+void Game::addQuestion(const Question &q)
 {
-    const int questionsNum = std::stoi(readIni("config.ini", "questions_per_game"));
-    mTimePerQuestion = std::stoi(readIni("config.ini", "seconds_per_question"));
-
-    for (int i = 0; i < questionsNum; ++i)
-    {
-        std::string question;
-        printf("Question #%d:\n", i+1);
-        scanf("%s100", question);
-
-        std::array<4, std::string> answers;
-        for (int j = 0; j < 4; ++j)
-        {
-            printf("Question #%d, answer #%d:\t", i + 1, j+1);
-            scanf("%s100", &answers[j]);
-        }
-
-        printf("Which of the provided answers is correct?\t");
-        int num = 0;
-        scanf("%d", &num);
-
-        Question q(question, answers);
-        q.setCorrectAnswerIndex(num);
-
-        mQuestions.push_back(q);
-    }
-}
-
-void Game::run()
-{
-    while (true)
-    {
-        ;
-    }
+    mQuestions.push_back(q);
 }
 
 void Game::runTheGame()
@@ -143,6 +108,9 @@ double Game::calculatePoints(const Message &msg, const Question& question) const
     if (question.isCorrectAnswer(msg.mAnswerBody))
     {
         std::chrono::duration<int> dur = msg.mTimestamp - mBroadcastTimepoint;
+
+        if (dur < 0)
+            return 0.0;
 
         return ((mTimePerQuestion - dur.count()) / mTimePerQuestion) * 1000;
     }

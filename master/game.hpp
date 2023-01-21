@@ -19,11 +19,10 @@ public:
     void runTheGame();
 
 private:
-    void setUp();
+    void addQuestion(const Question &q);
     void waitForAnswers(const Question& question) const;
     double calculatePoints(const Message &msg, const Question& question) const;
     void addPlayer(const std::string& nick);
-    void run() override;
 
     void sendStartSignal();
     void sendEndSignal();
