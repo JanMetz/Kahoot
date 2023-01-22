@@ -9,63 +9,38 @@
 #include <string>
 #include <thread>
 
-Game::Game(const long port, const std::string& addr) : Client(port, addr)
+Game::Game(const long port, const std::string& addr, const int hostFd) : Server(port, addr)
 {
-}
+    const int questionsNum = std::stoi(readIni("config.ini", "questions_per_game"));
+    mTimePerQuestion = std::stoi(readIni("config.ini", "seconds_per_question"));
 
-void Game::addQuestion(const Question &q)
-{
-    mQuestions.push_back(q);
+    sendMessage(std::string("numOfQuestions:") + std::to_string(questionsNum), clientsFd);
+
+    for (int i = 0; i < questionsNum; ++i)
+    {
+        mQuestions.push_back(createQuestion(i));
+    }
+
+    const int code = generateCode();
+    mGames[code] = game;
+
+    sendMessage(std::string("gameCode:") + std::to_string(code), clientsFd);
 }
 
 void Game::runTheGame()
 {
-    sendStartSignal();
+    sendMessage(std::string("theGameStarts"));
+    //block incoming traffic
 
     for (const auto question : mQuestions)
     {
-        broadcastNewQuestion(question);
+        sendMessage(std::string("question:") + question.getQuestionBody());
         mBroadcastTimepoint = std::chrono::high_resolution_clock::now();
         waitForAnswers(question);
         broadcastPunctation();
     }
 
-    sendEndSignal();
-}
-
-void Game::sendStartSignal()
-{
-    blockIncomingPlayers();
-
-    Message msg;
-    msg.mAction = START_GAME;
-    msg.mSender = this;
-    sendMessage(msg);
-}
-
-void Game::sendEndSignal()
-{
-    Message msg;
-    msg.mAction = END_GAME;
-    msg.mSender = this;
-    sendMessage(msg);
-}
-
-void Game::blockIncomingPlayers()
-{
-    Message msg;
-    msg.mAction = CLOSE_TRAFFIC;
-    msg.mSender = this;
-    sendMessage(msg);
-}
-
-void Game::broadcastNewQuestion(const Question &question)
-{
-    Message msg;
-    msg.mAction = BROADCAST_QUESTION;
-    msg.mQuestion = &question;
-    msg.mSender = this;
-    sendMessage(msg);
+    sendMessage(std::string("theGameEnds"));
 }
 
 void Game::broadcastPunctation()
@@ -121,4 +96,43 @@ double Game::calculatePoints(const Message &msg, const Question& question) const
 void Game::addPlayer(const std::string &nick)
 {
     mPunctation[nick] = 0;
+}
+
+Question Game::createQuestion(const int questionNum) const
+{
+    sendMessage(std::string("sendQuestion:") + std::to_string(questionNum), clientsFd);
+    question = receiveMessage(clientsFd);
+
+    std::array<4, std::string> answers;
+    for (int j = 0; j < 4; ++j)
+    {
+        sendMessage(std::string("sendAnswer:") + std::to_string(j), clientsFd);
+        answers[j] = receiveMessage(clientsFd);
+    }
+
+    sendMessage(std::string("provideCorrectMsgIndex"), clientsFd);
+    int = receiveMessage(clientsFd);
+
+    Question q(question, answers);
+    q.setCorrectAnswerIndex(num);
+
+    return q;
+}
+
+void Game::handleResponse(const int& fd)
+{
+    auto message = receiveMessage(fd);
+
+    /*size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos)
+    {
+        token = s.substr(0, pos);
+        std::cout << token << std::endl;
+        s.erase(0, pos + delimiter.length());
+    }
+    if (message)*/
+
+    //createGame(fd);
+    //handleAnswer(fd);
 }

@@ -111,69 +111,35 @@ bool Server::acceptClient()
 
 void Server::handleResponse(const int& fd)
 {
-    //read(fd, );
-    //createGame();
-    //handleAnswer();
-}
+    auto message = receiveMessage(fd);
 
-int Server::generateCode() 
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(1, 10000);
-
-    int code = distrib(gen);
-    while(std::find(mCodes.begin(), mCodes.end(), code) != mCodes.end())
-        code = distrib(gen);
-
-    mCodes.push_back(code);
-    return code;
-}
-
-void Server::createGame(const int &clientsFd)
-{
-    const int questionsNum = std::stoi(readIni("config.ini", "questions_per_game"));
-    mTimePerQuestion = std::stoi(readIni("config.ini", "seconds_per_question"));
-
-    Game game;
-
-    //sendMessage(numberOfQuestions)
-
-    for (int i = 0; i < questionsNum; ++i)
+    /*size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos) 
     {
-       game.addQuestion(createQuestion());
+        token = s.substr(0, pos);
+        std::cout << token << std::endl;
+        s.erase(0, pos + delimiter.length());
     }
+    if (message)*/
 
-    mGames[generateCode()] = game;
-
-    //sendMessage(gameCode)
+    //createGame(fd);
+    //handleAnswer(fd);
 }
 
-Question Server::createQuestion() const 
+void Server::sendMessage(const std::string& msgBody, const int fd)
 {
-    //sendMessage(askForQuestion)
-    //receiveMessage(question)
+    std::string message = ;
+    send(fd, messageBody, sizeof(messageBody), 0);
+}
 
-    std::string question;
+std::string Server::receiveMessage(const int fd)
+{
+    char answer[200];
+    int len;
+    recv(fd, answer, len, 0);
 
-    std::array<4, std::string> answers;
-    for (int j = 0; j < 4; ++j)
-    {
-        //sendMessage(askForAnswer)
-        //receiveMessage(answer)
-
-        answers[j] = 0;
-    }
-
-    //sendMessage(askForCorrectAnswersIndex)
-    //receiveMessage(index)
-
-    int index = 0;
-
-    Question q(question, answers);
-    q.setCorrectAnswerIndex(num);
-
-    return q;
+    return std::string(answer);
 }
 
 void Server::run()
@@ -194,4 +160,18 @@ void Server::run()
         }
        
     }
+}
+
+int Server::generateCode()
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 10000);
+
+    int code = distrib(gen);
+    while (std::find(mCodes.begin(), mCodes.end(), code) != mCodes.end())
+        code = distrib(gen);
+
+    mCodes.push_back(code);
+    return code;
 }

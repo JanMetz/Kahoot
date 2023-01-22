@@ -12,23 +12,21 @@
 
 class Message;
 
-class Game : public Client
+class Game : public Server
 {
 public:
-    Game(const long port, const std::string& addr);
+    Game(const long port, const std::string& addr, const int hostFd);
     void runTheGame();
 
 private:
-    void addQuestion(const Question &q);
     void waitForAnswers(const Question& question) const;
     double calculatePoints(const Message &msg, const Question& question) const;
     void addPlayer(const std::string& nick);
 
-    void sendStartSignal();
-    void sendEndSignal();
-    void blockIncomingPlayers();
-    void broadcastNewQuestion(const Question &question);
     void broadcastPunctation();
+
+    Question createQuestion(const int questionNum) const;
+    void handleResponse(const int& fd) override;
 
     std::chrono::time_point mBroadcastTimepoint;
     int mTimePerQuestion;
