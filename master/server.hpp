@@ -18,6 +18,7 @@
 class Server
 {
 public:
+
     Server(const long port, const std::string &addr);
     ~Server();
 
