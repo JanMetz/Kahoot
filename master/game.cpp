@@ -9,7 +9,7 @@
 #include <string>
 #include <thread>
 
-Game::Game(const long port, const std::string& addr, const int hostFd) : Server(port, addr)
+Game::Game(const long port, const std::string& addr) : Server(port, addr)
 {
     const int questionsNum = std::stoi(readIni("config.ini", "questions_per_game"));
     mTimePerQuestion = std::stoi(readIni("config.ini", "seconds_per_question"));
@@ -77,12 +77,12 @@ void Game::waitForAnswers(const Question& question) const
     }
 }
 
-double Game::calculatePoints(const Message &msg, const Question& question) const
+double Game::calculatePoints(const std::vector<std::string> &msg, const Question& question) const
 {
     Question question;
-    if (question.isCorrectAnswer(msg.mAnswerBody))
+    if (question.isCorrectAnswer(answer[1]))
     {
-        std::chrono::duration<int> dur = msg.mTimestamp - mBroadcastTimepoint;
+        std::chrono::duration<int> dur = answer[3] - mBroadcastTimepoint;
 
         if (dur < 0)
             return 0.0;
@@ -120,19 +120,17 @@ Question Game::createQuestion(const int questionNum) const
 }
 
 void Game::handleResponse(const int& fd)
-{
+{   
     auto message = receiveMessage(fd);
 
-    /*size_t pos = 0;
-    std::string token;
-    while ((pos = s.find(delimiter)) != std::string::npos)
+    if ((message[0] == "joinGame") || (message[0] == "createGame"))
     {
-        token = s.substr(0, pos);
-        std::cout << token << std::endl;
-        s.erase(0, pos + delimiter.length());
+        ;//ignore
     }
-    if (message)*/
 
-    //createGame(fd);
-    //handleAnswer(fd);
+    if (message[0] == "answer")
+    {
+        calculatePoints(message, );
+    }
+    
 }

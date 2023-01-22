@@ -21,11 +21,7 @@ void Player::getNick() const
 
 void Player::requestToJoinAGame(const int code)
 {
-    Message msg;
-    msg.mAction = JOIN_GAME;
-    msg.mGameCode = code;
-    msg.mSender = this;
-    sendMessage(msg);
+    sendMessage(std::string("joinGame:") + std::to_string(code));
 }
 
 void Player::run()
@@ -33,16 +29,22 @@ void Player::run()
     while (true)
     {
         auto msg = receiveMessage();
-        switch (msg.mAction)
+        if (msg[0] == "broadcastQuestion")
         {
-        case Server::BROADCAST_QUESTION: giveAnswer(msg); break;
-        case Server::JOIN_GAME: mJoinedGameCode = msg.mGameCode; break;
-        case Server::BROADCAST_PUNCTATION: displayPunctation(msg); break;
-        case Server::CREATE_GAME: createGame(); break;
-        default: break;
+            broadcastQuestion();
+            giveAnswer();
         }
-       
+
+        if (msg[0] == "joinGame")
+        {
+            auto newPort = receiveMessage();
+            //connect to different game server
+        }
         
+        if (msg[0] == "broadcastPunctation")
+        {
+            broadcastPunctation();
+        }
     }
 }
 
@@ -50,12 +52,9 @@ void Player::giveAnswer(const Message &msg)
 {
     //display the question
     //get the answer
-    Message answer;
-    answer.mAction = Server::QUESTION_ANSWER;
-    answer.mSender = this;
-    answer.mTimestamp = std::chrono::high_resolution_clock::now();
-    answer.mAnswerBody = "";
-    answer.mGameCode = mJoinedGameCode;
+    std::string userInput = "";
+    std::string timestamp = ""; //std::chrono::high_resolution_clock::now();
+    sendMessage(std::string("answerBody:") + userInput + std::string("timestamp:") + timestamp);
     sendMessage(answer);
 }
 
@@ -64,21 +63,32 @@ void Player::displayPunctation(const Message &msg)
 
 }
 
-void Player::createGame()
+int Player::createGame()
 {
-    Message msg;
-    msg.mAction = CREATE_GAME;
-    msg.mSender = this;
-    sendMessage(msg);
+    sendMessage(std::string("createGame"));
+    auto newPortMsg = receiveMessage();
+    int port = newPortMsg[1];
+    //connect to different game server
 
-    auto msg = receiveMessage();
-    switch (msg.mAction)
+    auto numOfQuestions = receiveMessage();
+
+    for (int i = 0; i < numOfQuestions; ++i)
     {
-    case Server::BROADCAST_QUESTION: giveAnswer(msg); break;
-    case Server::JOIN_GAME: mJoinedGameCode = msg.mGameCode; break;
-    case Server::BROADCAST_PUNCTATION: displayPunctation(msg); break;
-    case Server::CREATE_QUESTION: displayPunctation(msg); break;
-    case Server::CREATE_ANSWER: displayPunctation(msg); break;
-    default: break;
+        std::string userInput = "";
+        auto sendMessage = receiveMessage();
+        sendMessage(std::string("question:") + userInput);
+
+        for (int j = 0; j < 4; ++j)
+        {
+            auto sendAnswer = receiveMessage();
+            sendMessage(std::string("answer:") + userInput);
+        }
+
+        auto sendIndex = receiveMessage();
+        sendMessage(std::string("correctAnswerIndex:") + userInput);
     }
+
+    auto gameCodeMsg = receiveMessage();
+
+    return gameCodeMsg[1];
 }

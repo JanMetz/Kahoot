@@ -113,18 +113,17 @@ void Server::handleResponse(const int& fd)
 {
     auto message = receiveMessage(fd);
 
-    /*size_t pos = 0;
-    std::string token;
-    while ((pos = s.find(delimiter)) != std::string::npos) 
+    if ((message[0] == "joinGame") && (std::find(mGames.begin(), mGames.end(), message[1]) != mGames.end()))
     {
-        token = s.substr(0, pos);
-        std::cout << token << std::endl;
-        s.erase(0, pos + delimiter.length());
+        sendMessage(std::string("gamePort:") + std::to_string(port));
     }
-    if (message)*/
 
-    //createGame(fd);
-    //handleAnswer(fd);
+    if (message[0] == "createGame")
+    {
+        int port = 0;
+        Game game(port, "localhost");
+        sendMessage(std::string("gamePort:") + std::to_string(port));
+    }
 }
 
 void Server::sendMessage(const std::string& msgBody, const int fd)
@@ -138,6 +137,15 @@ std::string Server::receiveMessage(const int fd)
     char answer[200];
     int len;
     recv(fd, answer, len, 0);
+
+    /*size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos)
+    {
+        token = s.substr(0, pos);
+        std::cout << token << std::endl;
+        s.erase(0, pos + delimiter.length());
+    }*/
 
     return std::string(answer);
 }
