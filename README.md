@@ -26,3 +26,11 @@ Ilość pytań oraz czas na odpowiedź można ustalić od strony serwera za pomo
 Za każdą poprawną odpowiedź naliczane są punkty liczone wzorem 1000 * x, gdzie x to % pozostałego na pytanie czasu w momencie udzielenia odpowiedzi.
 Serwer obsługuje wiele quizów naraz. 
 Po wyczerpaniu się listy pytań wyświetlany jest zwycięzca.
+
+## Klient - instalacja (Linux)
+```
+cmake -DCMAKE_PREFIX_PATH=~/YOUR_PATH/Qt/gcc_64/ -S Kahoot_client -B build
+cd build
+make
+./Kahoot_client
+```
