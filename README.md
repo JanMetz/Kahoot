@@ -24,11 +24,3 @@ Po uruchomieniu przez twórce quizu gry wyświetlają się pytania i gracze udzi
 Uczestnicy widzą wzajemną punktację. 
 
 Po wyczerpaniu się listy pytań wyświetlany jest zwycięzca.
-
-## Klient - instalacja (Linux)
-```
-cmake -DCMAKE_PREFIX_PATH=~/YOUR_PATH/Qt/gcc_64/ -S Kahoot_client -B build
-cd build
-make
-./Kahoot_client
-```
