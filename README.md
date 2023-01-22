@@ -25,5 +25,10 @@ Uczestnicy widzą wzajemną punktację.
 
 Po wyczerpaniu się listy pytań wyświetlany jest zwycięzca.
 
-W przypadku zerwania połączenia po stronie gracza traci on możliwość odpowiedzi na pytania, które zostały zadane w czasie jego nieobecności.
-W przypadku zerwania połączenia po stronie serwera gracze oczekują 30s na wznowienie połączenia, a jeżeli ono nie nastąpi zwycięzca jest wyłaniany na podstawie ostatniej zapamiętanej punktacji, a gra się kończy.
+## Klient - instalacja (Linux)
+```
+cmake -DCMAKE_PREFIX_PATH=~/YOUR_PATH/Qt/gcc_64/ -S Kahoot_client -B build
+cd build
+make
+./Kahoot_client
+```
