@@ -67,7 +67,7 @@ void joinQuiz::socketConnected(){
     connTimeoutTimer->deleteLater();
     connTimeoutTimer=nullptr;
     ui->buttonBox->setEnabled(true);
-    closeSocket = false;
+    closeSocket = false;    
     QWidget *wdg = new Lobby(mainWindow, sock);
     wdg->show();
     this->close();
@@ -90,6 +90,6 @@ void joinQuiz::socketError(QTcpSocket::SocketError err){
 }
 
 void joinQuiz::socketReadable(){
-    //QByteArray ba = sock->readAll();
-
+    QByteArray ba = sock->readAll();
+    qDebug() << QString(ba);
 }
