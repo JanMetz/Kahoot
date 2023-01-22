@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Network )
 
 set(PROJECT_SOURCES
         main.cpp
@@ -23,6 +24,9 @@ set(PROJECT_SOURCES
         lobby.h lobby.cpp lobby.ui
         gamestate.h gamestate.cpp gamestate.ui
         scores.h scores.cpp scores.ui
+        connectscreen.h connectscreen.cpp connectscreen.ui
+        currentscores.h currentscores.cpp currentscores.ui
+        res.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -48,7 +52,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(Kahoot_client PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(Kahoot_client PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network)
 
 set_target_properties(Kahoot_client PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

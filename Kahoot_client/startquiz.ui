@@ -30,7 +30,7 @@
      <string>Code</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_2">
+   <widget class="QLabel" name="YourCode">
     <property name="text">
      <string>Your code</string>
     </property>

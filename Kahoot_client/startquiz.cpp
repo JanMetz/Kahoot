@@ -1,21 +1,27 @@
 #include "startquiz.h"
 #include "ui_startquiz.h"
 
-StartQuiz::StartQuiz(QMainWindow* m, QWidget *parent) :
+StartQuiz::StartQuiz(QMainWindow* m, QTcpSocket* s, int c, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::StartQuiz)
 {
     ui->setupUi(this);
     mainWindow = m;
+    sock = s;
+    code = c;
+    connect(sock, &QTcpSocket::disconnected, this, &StartQuiz::socketDisconnected);
+    connect(sock, &QTcpSocket::readyRead, this, &StartQuiz::socketReadable);
     connect(ui->startButton, &QPushButton::clicked, this, [&]{
-        QWidget *wdg = new GameState(mainWindow);
+        QWidget *wdg = new GameState(mainWindow, sock);
         wdg->show();
         this->close();
     });
     connect(ui->cancelButton, &QPushButton::clicked, this, [&]{
+        if(sock) sock->close();;
         mainWindow->show();
         this->close();
     });    
+    ui->YourCode->setText(QString::number(code));
 }
 
 StartQuiz::~StartQuiz()
@@ -36,4 +42,15 @@ void StartQuiz::removePlayer(QString player){
         ui->listWidget->removeItemWidget(x);
         delete x;
     }
+}
+
+void StartQuiz::socketDisconnected(){
+
+}
+
+
+
+void StartQuiz::socketReadable(){
+    QByteArray ba = sock->readAll();
+
 }
