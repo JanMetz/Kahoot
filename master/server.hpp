@@ -2,8 +2,6 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "games.hpp"
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -13,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <thread>
+#include <map>
 #include <fstream>
 
 class Server
@@ -28,22 +27,21 @@ public:
     void closeConnection();
     
     virtual void handleResponse(const int& fd);
-    bool acceptClient();
+    virtual bool acceptClient();
 
     void sendMessage(const std::string& msgBody, const int fd);
-    std::string receiveMessage(const int fd);
+    std::vector<std::string> receiveMessage(const int fd);
 
-    static int generateCode();
+    int generateCode() const;
 
 private:
-    socket mSock;
+    int mSock;
     unsigned long mPort;
     std::string mIpAddr;
     sockaddr_in mAddrStruct;
     std::vector<pollfd> mPolls;
-    std::vector<int> mCodes;
 
-    std::map<int, Game> mGames;
+    std::map<int, int> mGames; //mGames[code] = port;
 
     std::ofstream mDebugFile;
 };

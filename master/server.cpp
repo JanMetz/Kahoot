@@ -19,16 +19,14 @@
 #include <string>
 #include <exception>
 #include <fstream>
+#include <random>
 
-Server::Server(const unsigned long port, const std::string &addr) : mPort(port), mIpAddr(addr)
+Server::Server(const long port, const std::string &addr) : mPort(port), mIpAddr(addr)
 {
     mDebugFile.open("server_d.log", std::ios::app );
 
     if ((!openConnection()) || (!setupSocket()))
         return;
-
-    std::thread th(&Server::run, this);
-    th.join();
 }
 
 Server::~Server()
@@ -51,7 +49,7 @@ bool Server::setupSocket()
     }
 
     const int optval = 1;
-    setsockopt(serverSock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    setsockopt(mSock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 
     return true;
 }
@@ -112,42 +110,73 @@ bool Server::acceptClient()
 void Server::handleResponse(const int& fd)
 {
     auto message = receiveMessage(fd);
+    const int msgCode = std::stoi(message[1]);
 
-    if ((message[0] == "joinGame") && (std::find(mGames.begin(), mGames.end(), message[1]) != mGames.end()))
+    if ((message[0] == "joinGame") && (mGames.find(msgCode) != mGames.end()))
     {
-        sendMessage(std::string("gamePort:") + std::to_string(port));
+        sendMessage(std::string("gamePort:") + std::to_string(mGames[msgCode]), fd);
     }
 
     if (message[0] == "createGame")
     {
-        int port = 0;
-        Game game(port, "localhost");
-        sendMessage(std::string("gamePort:") + std::to_string(port));
+        bool success = false;
+        int port = mPort;
+
+        while (!success)
+        {
+            port++;
+            int code = generateCode();
+
+            try
+            {
+                Game game(port, "localhost");
+                std::thread th(&Server::run, game);
+
+                mGames[code] = port;
+
+                sendMessage(std::string("gamePort:") + std::to_string(port), fd);
+                sendMessage(std::string("gameCode:") + std::to_string(code), fd);
+
+                success = true;
+            }
+            catch (...)
+            {
+                mDebugFile << "Cannot assign port " << port << std::endl;
+            }
+        }
     }
 }
 
 void Server::sendMessage(const std::string& msgBody, const int fd)
 {
-    std::string message = ;
-    send(fd, messageBody, sizeof(messageBody), 0);
+    send(fd, msgBody.data(), sizeof(msgBody), 0);
 }
 
-std::string Server::receiveMessage(const int fd)
+std::vector<std::string> Server::receiveMessage(const int fd)
 {
     char answer[200];
     int len;
     recv(fd, answer, len, 0);
+    auto s = std::string(answer);
 
-    /*size_t pos = 0;
-    std::string token;
-    while ((pos = s.find(delimiter)) != std::string::npos)
-    {
-        token = s.substr(0, pos);
-        std::cout << token << std::endl;
-        s.erase(0, pos + delimiter.length());
-    }*/
+    auto tokenize = [&](std::vector<std::string>& vec, const std::string& delimiter) {
+        size_t pos = 0;
+        std::string token;
+        while ((pos = s.find(delimiter)) != std::string::npos)
+        {
+            token = s.substr(0, pos);
+            vec.push_back(token);
+            s.erase(0, pos + delimiter.length());
+        }
+    };
+    
+    std::vector<std::string> tmp;
+    tokenize(tmp, ";");
+    std::vector<std::string> ret;
+    for (auto& s : tmp)
+        tokenize(ret, ":");
 
-    return std::string(answer);
+    return ret;
 }
 
 void Server::run()
@@ -166,20 +195,18 @@ void Server::run()
                     handleResponse(client.fd);
             }
         }
-       
     }
 }
 
-int Server::generateCode()
+int Server::generateCode() const
 {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(1, 10000);
 
     int code = distrib(gen);
-    while (std::find(mCodes.begin(), mCodes.end(), code) != mCodes.end())
+    while (mGames.find(code) != mGames.end())
         code = distrib(gen);
 
-    mCodes.push_back(code);
     return code;
 }
