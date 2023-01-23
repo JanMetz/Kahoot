@@ -134,9 +134,9 @@ void Server::handleResponse(const int& fd)
 
                 mGames[code] = port;
 
-                sendMessage(std::string("gamePort:") + std::to_string(port), fd);
                 sendMessage(std::string("gameCode:") + std::to_string(code), fd);
-
+                sendMessage(std::string("gamePort:") + std::to_string(port), fd);
+                
                 success = true;
             }
             catch (...)
@@ -150,6 +150,14 @@ void Server::handleResponse(const int& fd)
 void Server::sendMessage(const std::string& msgBody, const int fd)
 {
     send(fd, msgBody.data(), sizeof(msgBody), 0);
+}
+
+void Server::broadcastMessage(const std::string& msg)
+{
+    for (auto& client : mPolls)
+    {
+        sendMessage(msg, client.fd);
+    }
 }
 
 std::vector<std::string> Server::receiveMessage(const int fd)

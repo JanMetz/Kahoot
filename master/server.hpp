@@ -30,6 +30,7 @@ public:
     virtual bool acceptClient();
 
     void sendMessage(const std::string& msgBody, const int fd);
+    void broadcastMessage(const std::string& msgBody);
     std::vector<std::string> receiveMessage(const int fd);
 
     int generateCode() const;

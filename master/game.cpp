@@ -1,5 +1,4 @@
 #include "game.hpp"
-#include "message.hpp"
 
 #include <vector>
 #include <map>
@@ -11,83 +10,74 @@
 
 Game::Game(const long port, const std::string& addr) : Server(port, addr)
 {
-    const int questionsNum = std::stoi(readIni("config.ini", "questions_per_game"));
-    mTimePerQuestion = std::stoi(readIni("config.ini", "seconds_per_question"));
-
-    sendMessage(std::string("numOfQuestions:") + std::to_string(questionsNum), clientsFd);
-
-    for (int i = 0; i < questionsNum; ++i)
-    {
-        mQuestions.push_back(createQuestion(i));
-    }
-
-    const int code = generateCode();
-    mGames[code] = game;
-
-    sendMessage(std::string("gameCode:") + std::to_string(code), clientsFd);
+    
 }
 
 void Game::runTheGame()
 {
-    sendMessage(std::string("theGameStarts"));
-    //block incoming traffic
+    broadcastMessage(std::string("theGameStarts"));
+    mTrafficClosed = true;
 
     for (const auto question : mQuestions)
     {
-        sendMessage(std::string("question:") + question.getQuestionBody());
+        mAnswersNum = 0;
+        mGotAllAnswers = false;
+        mCurrentCorrectAnswer = "";
+
+        broadcastMessage(std::string("question:") + question.getQuestionBody());
+        mCurrentCorrectAnswer = question.getCorrectAnswer();
         mBroadcastTimepoint = std::chrono::high_resolution_clock::now();
-        waitForAnswers(question);
-        broadcastPunctation();
+        
+        while (!mGotAllAnswers)
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+        broadcastPunctation();  
     }
 
-    sendMessage(std::string("theGameEnds"));
+    broadcastMessage(std::string("theGameEnds"));
 }
 
 void Game::broadcastPunctation()
 {
-    Message msg;
-    msg.mAction = BROADCAST_PUNCTATION;
-    msg.mPunctation = &mPunctation;
-    msg.mSender = this;
-    sendMessage(msg);
+    std::string msg;
+    for (auto& punct : mPunctation)
+    {
+        msg = msg + punct.first() + ":" + std::to_string(punct.second()) + ";";
+    }
+
+    broadcastMessage(msg);
 }
 
-void Game::waitForAnswers(const Question& question) const
+void Game::extractAnswer(const std::vector<std::string>& msg) const  //format odpowiedzi answer:OdpowiedzTekstem;player:NickGracza;timestamp:CzasOddaniaOdpowiedzi;
 {
     using namespace std::chrono;
 
     const int twoThirds = static_cast<int>(static_cast<double>(2 * mPlayers.size()) / 3);
-    int answersNum = 0;
-
-    const auto start = high_resolution_clock::now();
     int elapsed = 0;
 
-    while (elapsed < mTimePerQuestion && answersNum < twoThirds)
+    if (elapsed < mTimePerQuestion && mAnswersNum < twoThirds)
     {
-        std::chrono::duration<int> dur = high_resolution_clock::now() - start;
+        duration<int> dur = high_resolution_clock::now() - mBroadcastTimepoint;
         elapsed = dur.count();
-        auto msg = receiveMessage();
-        if (msg)
-        {
-            mPunctation[msg.mSender.getNick()] += calculatePoints(msg, question);
-            answersNum++;
-        }
 
-        std::this_thread::sleep_for(milliseconds(mTimePerQuestion * 1000 / 100));
+        mPunctation[msg[3]] += calculatePoints(msg);
+        answersNum++;
     }
+    else
+        mGotAllAnswers = true;
 }
 
-double Game::calculatePoints(const std::vector<std::string> &msg, const Question& question) const
+double Game::calculatePoints(const std::vector<std::string> &msg) const
 {
-    Question question;
-    if (question.isCorrectAnswer(answer[1]))
+    if (mCurrentCorrectAnswer == msg[1])
     {
-        std::chrono::duration<int> dur = answer[3] - mBroadcastTimepoint;
+        std::chrono::duration<int> len = std::chrono::high_resolution_clock::time_point::time_since_epoch() - mBroadcastTimepoint;
+        long dur = std::stol(msg[5]) - len.count();
 
         if (dur < 0)
             return 0.0;
 
-        return ((mTimePerQuestion - dur.count()) / mTimePerQuestion) * 1000;
+        return ((mTimePerQuestion - dur) / mTimePerQuestion) * 1000;
     }
 
     return 0.0;
@@ -100,18 +90,19 @@ void Game::addPlayer(const std::string &nick)
 
 Question Game::createQuestion(const int questionNum) const
 {
-    sendMessage(std::string("sendQuestion:") + std::to_string(questionNum), clientsFd);
-    question = receiveMessage(clientsFd);
+    const int hostFd = mPolls[0].fd;
+    sendMessage(std::string("sendQuestion:") + std::to_string(questionNum), hostFd);
+    question = receiveMessage(hostFd);
 
     std::array<4, std::string> answers;
     for (int j = 0; j < 4; ++j)
     {
-        sendMessage(std::string("sendAnswer:") + std::to_string(j), clientsFd);
-        answers[j] = receiveMessage(clientsFd);
+        sendMessage(std::string("sendAnswer:") + std::to_string(j), hostFd);
+        answers[j] = receiveMessage(hostFd);
     }
 
-    sendMessage(std::string("provideCorrectMsgIndex"), clientsFd);
-    int = receiveMessage(clientsFd);
+    sendMessage(std::string("provideCorrectMsgIndex"), hostFd);
+    int = receiveMessage(hostFd);
 
     Question q(question, answers);
     q.setCorrectAnswerIndex(num);
@@ -130,7 +121,47 @@ void Game::handleResponse(const int& fd)
 
     if (message[0] == "answer")
     {
-        calculatePoints(message, );
+        extractAnswer(message);
     }
-    
+
+    if (message[0] == "startTheGame")
+    {
+        std::thread th(&Game::runTheGame, this);
+    }
+}
+
+bool Game::acceptClient()
+{
+    if (mTrafficClosed)
+        return false;
+
+    int clientFd = accept(mSock, nullptr, nullptr);
+    if (clientFd == -1)
+    {
+        mDebugFile << "accept failed";
+        return false;
+    }
+
+    pollfd poll;
+    poll.fd = clientFd;
+    poll.events = POLLIN;
+
+    mPolls.push_back(poll);
+
+    if (mPolls.size() == 1)
+        setupGame();
+
+    return true;
+}
+
+void Game::setupGame()
+{
+    const int questionsNum = std::stoi(readIni("config.ini", "questions_per_game"));
+    mTimePerQuestion = std::stoi(readIni("config.ini", "seconds_per_question"));
+
+    const int hostFd = mPolls[0].fd;
+    sendMessage(std::string("numOfQuestions:") + std::to_string(questionsNum), hostFd);
+
+    for (int i = 0; i < questionsNum; ++i)
+        mQuestions.push_back(createQuestion(i));
 }
