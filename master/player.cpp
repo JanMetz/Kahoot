@@ -21,7 +21,7 @@ void Player::getNick() const
 
 void Player::requestToJoinAGame(const int code)
 {
-    sendMessage(std::string("joinGame:") + std::to_string(code));
+    sendMessage(std::string("joinGame:") + std::to_string(code), mServerFd);
 }
 
 void Player::run()

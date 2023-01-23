@@ -16,6 +16,9 @@ public:
     bool setupSocket();
     Message receiveMessage();
     void sendMessage(const Message &msg);
+
+private:
+    int mServerFd;
 };
 
 #endif
