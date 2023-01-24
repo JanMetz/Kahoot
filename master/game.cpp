@@ -43,12 +43,13 @@ void Game::runTheGame()
     }
 
     broadcastMessage(std::string("theGameEnds"));
+    broadcastPunctation();
     mRun = false;
 }
 
 void Game::broadcastPunctation()
 {
-    std::string msg;
+    std::string msg = "punctation:";
     for (auto& punct : mPunctation)
     {
         msg = msg + punct.first + ":" + std::to_string(punct.second) + ";";
@@ -99,7 +100,32 @@ bool Game::addPlayer(const int clientFd)
         sendMessage(std::string("accepted"), clientFd);
 
     mPunctation[nickMsg[1]] = 0;
+
+    std::string allNicks = "allNicks:";
+    for (auto& nick : mPunctation)
+    {
+        allNicks += nick.first + ";";
+    }
+
+    broadcastMessage(allNicks);
+    
     return true;
+}
+
+void Game::removePlayer(const int fd, const std::string &nick)
+{
+    shutdown(fd, SHUT_RDWR);
+    close(fd);
+
+    auto it = mPolls.begin();
+    for (it; it < mPolls.end();  ++it)
+    {
+        if (it->fd == fd)
+            break;
+    }
+
+    mPolls.erase(it);
+    mPunctation.erase(mPunctation.find(nick));
 }
 
 Questions Game::createQuestion(const int questionNum)
@@ -143,6 +169,11 @@ void Game::handleResponse(const int& fd)
     if (message[0] == "startTheGame" && fd == mPolls[1].fd)
     {
         std::thread th(&Game::runTheGame, this);
+    }
+
+    if (message[0] == "leaveTheGame")
+    {
+        removePlayer(fd, message[1]);
     }
 }
 

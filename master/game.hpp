@@ -20,12 +20,14 @@ public:
 private:
     void extractAnswer(const std::vector<std::string>& msg);
     double calculatePoints(const std::vector<std::string>& msg) const;
+
     bool addPlayer(const int clientFd);
+    void removePlayer(const int fd, const std::string& nick);
+
     void setupGame();
-
-    void broadcastPunctation();
-
     Questions createQuestion(const int questionNum);
+    void broadcastPunctation();
+   
     void handleResponse(const int& fd) override;
     bool acceptClient() override;
     void run() override;
