@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "game.hpp"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -130,7 +131,7 @@ void Server::handleResponse(const int& fd)
             try
             {
                 Game game(port, "localhost");
-                std::thread th(&Server::run, game);
+                std::thread th(&Server::run, &game);
 
                 mGames[code] = port;
 
@@ -154,7 +155,7 @@ void Server::sendMessage(const std::string& msgBody, const int fd)
 
 void Server::broadcastMessage(const std::string& msg)
 {
-    for (auto& client : mPolls)
+    for (const auto& client : mPolls)
     {
         sendMessage(msg, client.fd);
     }

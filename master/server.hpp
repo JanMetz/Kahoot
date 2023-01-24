@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <poll.h>
 
 #include <vector>
 #include <string>
@@ -21,7 +22,7 @@ public:
     ~Server();
 
     bool setupSocket();
-    void run();
+    virtual void run();
 
     bool openConnection();
     void closeConnection();
@@ -35,12 +36,12 @@ public:
 
     int generateCode() const;
 
-private:
+protected:
     int mSock;
     unsigned long mPort;
     std::string mIpAddr;
     sockaddr_in mAddrStruct;
-    std::vector<pollfd> mPolls;
+    std::vector<struct pollfd> mPolls;
 
     std::map<int, int> mGames; //mGames[code] = port;
 

@@ -2,15 +2,13 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
-#include "players.hpp"
 #include "questions.hpp"
+#include <poll.h>
 
 #include <vector>
 #include <map>
 #include <string>
 #include <chrono>
-
-class Message;
 
 class Game : public Server
 {
@@ -19,23 +17,27 @@ public:
     void runTheGame();
 
 private:
-    void extractAnswer(const std::vector<std::string>& msg) const
-    double calculatePoints(const std::vector<std::string>& msg, const std::string& corrAnswer) const;
-    void addPlayer(const std::string& nick);
+    void extractAnswer(const std::vector<std::string>& msg);
+    double calculatePoints(const std::vector<std::string>& msg) const;
+    bool addPlayer(const int clientFd);
+    void setupGame();
 
     void broadcastPunctation();
 
-    Question createQuestion(const int questionNum) const;
+    Questions createQuestion(const int questionNum);
     void handleResponse(const int& fd) override;
     bool acceptClient() override;
-
-    std::chrono::time_point mBroadcastTimepoint;
+    void run() override;
+    
+    std::chrono::time_point<std::chrono::high_resolution_clock> mBroadcastTimepoint;
     int mTimePerQuestion;
 
     std::vector<Questions> mQuestions;
     std::map<std::string, double> mPunctation;
+
     bool mTrafficClosed;
     bool mGotAllAnswers;
+    bool mRun;
     int mAnswersNum;
     std::string mCurrentCorrectAnswer;
 };

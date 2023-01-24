@@ -4,12 +4,12 @@
 #include <string>
 
 
-Questions::Questions(const std::string &question, const std::array<std::string, NUMBER_OF_QUESTIONS> &answers) : mAnswers(answers), mQuestion(question)
+Questions::Questions(const std::string &question, const std::array<std::string, NUMBER_OF_ANSWERS> &answers) : mAnswers(answers), mQuestion(question)
 {
 
 }
 
-std::array<std::string, NUMBER_OF_QUESTIONS> Questions::getAnswers() const
+std::array<std::string, Questions::NUMBER_OF_ANSWERS> Questions::getAnswers() const
 {
     return mAnswers;
 }
@@ -26,7 +26,7 @@ std::string Questions::getQuestionBody() const
 
 void Questions::setCorrectAnswerIndex(const int index)
 {
-    if (mCorrectAnswerIndex >= NUMBER_OF_QUESTIONS)
+    if (mCorrectAnswerIndex >= NUMBER_OF_ANSWERS)
         return;
 
     mCorrectAnswerIndex = index;
