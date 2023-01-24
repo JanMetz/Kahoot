@@ -30,6 +30,10 @@ createQuestion::createQuestion(QMainWindow* m, int n, int t, QWidget *parent) :
             //msgBox.exec();
             //return;
         }
+        questions.push_back({ui->Question->toPlainText(),
+            ui->answerA->toPlainText(), ui->answerB->toPlainText(),
+            ui->answerC->toPlainText(), ui->answerD->toPlainText(),
+            QString::number(answerId)});
         questionNumber++;
         ui->questionNumber->setText(QStringLiteral("Question %1").arg(questionNumber));
         ui->Question->clear();
@@ -42,7 +46,7 @@ createQuestion::createQuestion(QMainWindow* m, int n, int t, QWidget *parent) :
         ui->buttonGroup->button(answerId)->setChecked(false);
         ui->buttonGroup->setExclusive(true);
         if(questionNumber > numberOfQuestions) {
-            QWidget *wdg = new ConnectScreen(mainWindow, numberOfQuestions, time);
+            QWidget *wdg = new ConnectScreen(mainWindow, numberOfQuestions, time, questions);
             wdg->show();
             this->close();
         }

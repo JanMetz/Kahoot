@@ -10,31 +10,7 @@ joinQuiz::joinQuiz(QMainWindow* m,QWidget *parent) :
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     closeSocket = true;
     ui->codeEdit->setValidator( new QIntValidator(0, 9999, this) );
-}
 
-void joinQuiz::accept() {
-    //if(ui->nameEdit->text() == "" || ui->codeEdit->text() == "") return;
-    ui->buttonBox->setEnabled(false);
-    if(sock)
-        delete sock;
-    sock = new QTcpSocket(this);
-    connTimeoutTimer = new QTimer(this);
-    connTimeoutTimer->setSingleShot(true);
-    connect(connTimeoutTimer, &QTimer::timeout, [&]{
-        sock->abort();
-        sock->deleteLater();
-        sock = nullptr;
-        connTimeoutTimer->deleteLater();
-        connTimeoutTimer=nullptr;
-        QMessageBox::critical(this, "Error", "Connect timed out");
-    });
-
-    connect(sock, &QTcpSocket::connected, this, &joinQuiz::socketConnected);
-    connect(sock, &QTcpSocket::disconnected, this, &joinQuiz::socketDisconnected);
-    connect(sock, &QTcpSocket::errorOccurred, this, &joinQuiz::socketError);
-    connect(sock, &QTcpSocket::readyRead, this, &joinQuiz::socketReadable);
-
-    //QFile file(QCoreApplication::applicationDirPath()+"/config.txt");
     QFile file(":/config.txt");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         ui->buttonBox->setEnabled(true);
@@ -42,12 +18,18 @@ void joinQuiz::accept() {
         return;
     }
     QTextStream in(&file);
-    QString adres = in.readLine();
-    int port = in.readLine().toInt();
+    adres = in.readLine();
+    port = in.readLine().toInt();
+    connectToServer();
 
-    sock->connectToHost(QString(adres), port);
-    connTimeoutTimer->start(3000);
+}
 
+void joinQuiz::accept() {
+    if(ui->nameEdit->text() == "" || ui->codeEdit->text() == "") return;
+    ui->buttonBox->setEnabled(false);
+    connect(sock, &QTcpSocket::readyRead, this, &joinQuiz::joinResponse);
+    QString request = QString("joinGame:") + QString(ui->codeEdit->text());
+    sock->write(request.toUtf8());
 
 }
 
@@ -67,14 +49,12 @@ void joinQuiz::socketConnected(){
     connTimeoutTimer->deleteLater();
     connTimeoutTimer=nullptr;
     ui->buttonBox->setEnabled(true);
-    closeSocket = false;    
-    QWidget *wdg = new Lobby(mainWindow, sock);
-    wdg->show();
-    this->close();
+
 }
 
 void joinQuiz::socketDisconnected(){
-
+    mainWindow->show();
+    this->close();
 }
 
 void joinQuiz::socketError(QTcpSocket::SocketError err){
@@ -89,7 +69,56 @@ void joinQuiz::socketError(QTcpSocket::SocketError err){
     ui->buttonBox->setEnabled(true);
 }
 
-void joinQuiz::socketReadable(){
+void joinQuiz::joinResponse(){
     QByteArray ba = sock->readAll();
-    qDebug() << QString(ba);
+    port = ba.toInt();
+    sock->close();
+    connectToServer();
+    ui->codeEdit->setEnabled(false);
+    connect(sock, &QTcpSocket::readyRead, this, &joinQuiz::nameResponse);
+    connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(acceptName()));
+    sock->write(ui->nameEdit->text().toUtf8());
+
+}
+
+void joinQuiz::nameResponse(){
+    QByteArray ba = sock->readAll();
+    QString response = QString(ba);
+    if(response == "accepted") {
+        closeSocket = false;
+        QWidget *wdg = new Lobby(mainWindow, sock);
+        wdg->show();
+        this->close();
+    } else {
+        QMessageBox::critical(this,"Error", "Invalid name");
+        ui->buttonBox->setEnabled(true);
+    }
+}
+
+void joinQuiz::acceptName(){
+    sock->write(ui->nameEdit->text().toUtf8());
+    ui->buttonBox->setEnabled(false);
+}
+
+void joinQuiz::connectToServer(){
+    if(sock)
+        delete sock;
+    sock = new QTcpSocket(this);
+    connTimeoutTimer = new QTimer(this);
+    connTimeoutTimer->setSingleShot(true);
+    connect(connTimeoutTimer, &QTimer::timeout, [&]{
+        sock->abort();
+        sock->deleteLater();
+        sock = nullptr;
+        connTimeoutTimer->deleteLater();
+        connTimeoutTimer=nullptr;
+        QMessageBox::critical(this, "Error", "Connect timed out");
+    });
+
+    connect(sock, &QTcpSocket::connected, this, &joinQuiz::socketConnected);
+    connect(sock, &QTcpSocket::disconnected, this, &joinQuiz::socketDisconnected);
+    connect(sock, &QTcpSocket::errorOccurred, this, &joinQuiz::socketError);
+
+    sock->connectToHost(QString(adres), port);
+    connTimeoutTimer->start(3000);
 }

@@ -14,6 +14,46 @@ QuestionScreen::QuestionScreen(QMainWindow *m, QTcpSocket* s, QWidget *parent) :
         mainWindow->show();
         this->close();
     });
+    connect(ui->buttonA, &QPushButton::clicked, this, [&]{
+        ui->buttonA->setEnabled(false);
+        ui->buttonB->setEnabled(false);
+        ui->buttonC->setEnabled(false);
+        ui->buttonD->setEnabled(false);
+        float timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        QString answer = QString("answerBody:") + ui->buttonA->text() +
+                QString(" timestamp:") + QString::number(timestamp);
+        sock->write(answer.toUtf8());
+    });
+    connect(ui->buttonB, &QPushButton::clicked, this, [&]{
+        ui->buttonA->setEnabled(false);
+        ui->buttonB->setEnabled(false);
+        ui->buttonC->setEnabled(false);
+        ui->buttonD->setEnabled(false);
+        float timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        QString answer = QString("answerBody:") + ui->buttonB->text() +
+                QString(" timestamp:") + QString::number(timestamp);
+        sock->write(answer.toUtf8());
+    });
+    connect(ui->buttonC, &QPushButton::clicked, this, [&]{
+        ui->buttonA->setEnabled(false);
+        ui->buttonB->setEnabled(false);
+        ui->buttonC->setEnabled(false);
+        ui->buttonD->setEnabled(false);
+        float timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        QString answer = QString("answerBody:") + ui->buttonC->text() +
+                QString(" timestamp:") + QString::number(timestamp);
+        sock->write(answer.toUtf8());
+    });
+    connect(ui->buttonD, &QPushButton::clicked, this, [&]{
+        ui->buttonA->setEnabled(false);
+        ui->buttonB->setEnabled(false);
+        ui->buttonC->setEnabled(false);
+        ui->buttonD->setEnabled(false);
+        float timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        QString answer = QString("answerBody:") + ui->buttonD->text() +
+                QString(" timestamp:") + QString::number(timestamp);
+        sock->write(answer.toUtf8());
+    });
 }
 
 QuestionScreen::~QuestionScreen()
@@ -22,7 +62,8 @@ QuestionScreen::~QuestionScreen()
 }
 
 void QuestionScreen::socketDisconnected(){
-
+    mainWindow->show();
+    this->close();
 }
 
 
