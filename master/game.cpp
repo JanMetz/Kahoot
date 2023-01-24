@@ -167,7 +167,7 @@ bool Game::acceptClient()
 
     mPolls.push_back(poll);
 
-    if (mPolls.size() == 1)
+    if (mPolls.size() == 2)
         setupGame();
 
     return true;
