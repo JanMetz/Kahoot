@@ -6,17 +6,15 @@ Temat projektu: imitacja gry Kahoot
 
 ## Początek
 Gracz łączy się z serwerem i wybiera czy chce utworzyć quiz czy dołączyć do istniejącego.
-Po połączeniu gracz wybiera swój nick, który będzie go identyfikował w trakcie rozgrywki. 
-Jeżeli wybierze nick już zajęty przez innego użytkownika serwer poprosi o ponowne wybranie nicku.
 
 ## Tworzenie quizu
-Gracz po wybraniu opcji utworzenia quizu wprowadza pytania oraz 4 przykładowe odpowiedzi, zaznaczając która z nich jest poprawna.
+Gracz wybiera swój nick, który będzie go identyfikował w trakcie rozgrywki.
+Gracz wprowadza pytania oraz 4 przykładowe odpowiedzi, zaznaczając która z nich jest poprawna.
 Na koniec procesu tworzenia quizu gracz otrzymuje kod dostępu pozwalający innym użytkownikom na dołączenie.
-Gracz po wystartowaniu quizu widzi na bieżąco ile osób wybrało poszególne odpowiedzi.
 
 ## Uczestnictwo w quizie
-Gracz po wybraniu opcji dołączenia do istniejącego quizu wpisuje kod i dołącza do lobby. 
-W przypadku błędnego kodu serwer prosi o podanie go ponownie.  
+Gracz po wybraniu opcji dołączenia do istniejącego quizu wpisuje kod oraz swój nick i dołącza do lobby. 
+W przypadku błędnego kodu lub wpisania już zajętego nick'a serwer prosi o ponowne podanie błędnej danej(danych).  
 Gracz widzi w lobby innych graczy i może w każdej chwili opuścić grę.
 Po uruchomieniu rozgrywki na ekranie uczestników wyświetlają się pytania oraz możliwe odpowiedzi, wśród których gracze muszą wybrać jedną.
 Uczestnicy widzą wzajemną punktację. 
