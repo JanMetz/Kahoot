@@ -22,7 +22,7 @@ Po uruchomieniu rozgrywki na ekranie uczestników wyświetlają się pytania ora
 Uczestnicy widzą wzajemną punktację. 
 
 ## Szczegóły implementacyjne
-Ilość pytań oraz czas na odpowiedź można ustalić od strony serwera za pomocą zmiany odpowiednich plików .ini. Możliwośc udzielenia odpowiedzi może stać się niedostępna przed upływem wyznaczonego czasu, pod warunkiem, że 2/3 graczy biorących udział w rozgrywce udzieli swoich odpowiedzi. 
+Ilość pytań oraz czas na odpowiedź są ustalane przez użytkownika tworzącego quiz. Możliwośc udzielenia odpowiedzi może stać się niedostępna przed upływem wyznaczonego czasu, pod warunkiem, że 2/3 graczy biorących udział w rozgrywce udzieli swoich odpowiedzi. 
 Za każdą poprawną odpowiedź naliczane są punkty liczone wzorem 1000 * x, gdzie x to % pozostałego na pytanie czasu w momencie udzielenia odpowiedzi.
 Serwer obsługuje wiele quizów naraz. 
 Po wyczerpaniu się listy pytań wyświetlany jest zwycięzca.
@@ -33,4 +33,6 @@ cmake -DCMAKE_PREFIX_PATH=~/YOUR_PATH/Qt/gcc_64/ -S Kahoot_client -B build
 cd build
 make
 ./Kahoot_client
+
+g++ main.cpp server.cpp game.cpp questions.cpp -lpthread
 ```
