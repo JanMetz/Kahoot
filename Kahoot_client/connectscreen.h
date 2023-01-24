@@ -6,6 +6,9 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QMessageBox>
+#include <QFile>
+#include <vector>
+#include <array>
 #include "startquiz.h"
 
 namespace Ui {
@@ -17,7 +20,7 @@ class ConnectScreen : public QWidget
     Q_OBJECT
 
 public:
-    explicit ConnectScreen(QMainWindow* m, int n, int t, QWidget *parent = nullptr);
+    explicit ConnectScreen(QMainWindow* m, int n, int t, std::vector<std::array<QString, 6>> q, QWidget *parent = nullptr);
     ~ConnectScreen();
 public slots:
     void accept();
@@ -27,12 +30,17 @@ private:
     QMainWindow* mainWindow;
     int numberOfQuestions;
     int time;
+    int port;
+    std::vector<std::array<QString, 6>> questions;
+    QString adres;
     QTcpSocket * sock {nullptr};
     QTimer * connTimeoutTimer{nullptr};
     void socketConnected();
     void socketDisconnected();
     void socketError(QTcpSocket::SocketError);
     void socketReadable();
+    void connectToServer();
+    void sendQuestions();
 };
 
 #endif // CONNECTSCREEN_H

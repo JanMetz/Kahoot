@@ -12,6 +12,8 @@ StartQuiz::StartQuiz(QMainWindow* m, QTcpSocket* s, int c, QWidget *parent) :
     connect(sock, &QTcpSocket::disconnected, this, &StartQuiz::socketDisconnected);
     connect(sock, &QTcpSocket::readyRead, this, &StartQuiz::socketReadable);
     connect(ui->startButton, &QPushButton::clicked, this, [&]{
+        QString msg = QString("startTheGame");
+        sock->write(msg.toUtf8());
         QWidget *wdg = new GameState(mainWindow, sock);
         wdg->show();
         this->close();

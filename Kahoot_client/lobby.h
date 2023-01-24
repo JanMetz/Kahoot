@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QWidget>
 #include <QTcpSocket>
+#include "questionscreen.h"
 
 namespace Ui {
 class Lobby;
@@ -21,6 +22,7 @@ private:
     Ui::Lobby *ui;
     QMainWindow* mainWindow;
     QTcpSocket * sock ;
+    bool closeSocket;
     void socketDisconnected();
     void socketReadable();
 };

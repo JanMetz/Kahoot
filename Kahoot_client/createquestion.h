@@ -5,6 +5,8 @@
 #include <QMainWindow>
 #include "connectscreen.h"
 #include <QMessageBox>
+#include <vector>
+#include <array>
 
 namespace Ui {
 class createQuestion;
@@ -25,6 +27,7 @@ private:
     int questionNumber;
     int time;
     int answerId;
+    std::vector<std::array<QString, 6>> questions;
 };
 
 #endif // CREATEQUESTION_H

@@ -1,7 +1,7 @@
 #include "createquiz.h"
 #include "ui_createquiz.h"
 
-createQuiz::createQuiz(QMainWindow* m,QWidget *parent) :
+createQuiz::createQuiz(QMainWindow* m, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::createQuiz), mainWindow(m)
 {

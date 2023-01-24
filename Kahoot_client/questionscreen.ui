@@ -23,16 +23,6 @@
     </rect>
    </property>
   </widget>
-  <widget class="QLCDNumber" name="time">
-   <property name="geometry">
-    <rect>
-     <x>860</x>
-     <y>30</y>
-     <width>171</width>
-     <height>151</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>

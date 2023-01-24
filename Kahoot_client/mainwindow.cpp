@@ -22,10 +22,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->exitButton, &QPushButton::clicked, this, [&]{
          QApplication::quit();
     });
+
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
-
