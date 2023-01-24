@@ -3,6 +3,7 @@
 #define GAME_HPP
 
 #include "questions.hpp"
+#include "server.hpp"
 #include <poll.h>
 
 #include <vector>

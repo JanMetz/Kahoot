@@ -123,6 +123,7 @@ void Server::handleResponse(const int& fd)
         bool success = false;
         int port = mPort;
 
+        Server* game;
         while (!success)
         {
             port++;
@@ -130,8 +131,9 @@ void Server::handleResponse(const int& fd)
 
             try
             {
-                Game game(port, "localhost");
-                std::thread th(&Server::run, &game);
+                game = new Game(port, "localhost");
+                std::thread th(&Server::run, game);
+                th.detach();
 
                 mGames[code] = port;
 
@@ -142,9 +144,12 @@ void Server::handleResponse(const int& fd)
             }
             catch (...)
             {
+                delete game;
                 mDebugFile << "Cannot assign port " << port << std::endl;
             }
         }
+
+        delete game;
     }
 }
 

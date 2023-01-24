@@ -26,6 +26,13 @@ void Game::runTheGame()
         mCurrentCorrectAnswer = "";
 
         broadcastMessage(std::string("question:") + question.getQuestionBody());
+
+        std::string answers = "";
+        for (auto& answer : question.getAnswers())
+            answers += std::string("answer:") + answer + ";";
+
+        broadcastMessage(answers);
+
         mCurrentCorrectAnswer = question.getCorrectAnswer();
         mBroadcastTimepoint = std::chrono::high_resolution_clock::now();
         
@@ -55,7 +62,7 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
     using namespace std::chrono;
 
     const int twoThirds = static_cast<int>(static_cast<double>(2 * mPunctation.size()) / 3);
-    int elapsed dur = high_resolution_clock::now().count() - mBroadcastTimepoint.time_since_epoch.count();
+    int elapsed = high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint.time_since_epoch().count();
 
     if (elapsed < mTimePerQuestion && mAnswersNum < twoThirds)
     {
