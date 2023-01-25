@@ -179,7 +179,7 @@ void Server::broadcastMessage(const std::string& msg)
     }
 }
 
-std::vector<std::string> Server::receiveMessage(const int fd)
+std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
 {
     char answer[200];
     int len;
@@ -202,6 +202,12 @@ std::vector<std::string> Server::receiveMessage(const int fd)
     std::vector<std::string> ret;
     for (auto& s : tmp)
         tokenize(ret, ":");
+
+    if (ret.size() < minSize)
+    {
+        mDebugFile << "Received message has invalid size\n";
+        return {"1","2","3","4","5","6","7","8"}; // so it will not crash
+    }
 
     return ret;
 }

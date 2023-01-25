@@ -33,7 +33,7 @@ public:
 
     void sendMessage(const std::string& msgBody, const int fd);
     void broadcastMessage(const std::string& msgBody);
-    std::vector<std::string> receiveMessage(const int fd);
+    std::vector<std::string> receiveMessage(const int fd, const int minSize = 1);
 
     int generateCode() const;
 

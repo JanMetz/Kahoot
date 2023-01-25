@@ -90,7 +90,8 @@ double Game::calculatePoints(const std::vector<std::string> &msg) const
 
 bool Game::addPlayer(const int clientFd)
 {
-    auto nickMsg = receiveMessage(clientFd);
+    auto nickMsg = receiveMessage(clientFd, 2);
+
     if (mPunctation.find(nickMsg[1]) != mPunctation.end())
     {
         sendMessage(std::string("rejected"), clientFd);
@@ -132,18 +133,18 @@ Questions Game::createQuestion(const int questionNum)
 {
     const int hostFd = mPolls.at(1).fd;
     sendMessage(std::string("sendQuestion:") + std::to_string(questionNum), hostFd);
-    auto questionMsg = receiveMessage(hostFd);
+    auto questionMsg = receiveMessage(hostFd, 2);
 
     std::array<std::string, 4> answers;
     for (int j = 0; j < 4; ++j)
     {
         sendMessage(std::string("sendAnswer:") + std::to_string(j), hostFd);
-        auto answerMsg = receiveMessage(hostFd);
+        auto answerMsg = receiveMessage(hostFd, 2);
         answers[j] = answerMsg[1];
     }
 
     sendMessage(std::string("provideCorrectMsgIndex"), hostFd);
-    auto indexMsg = receiveMessage(hostFd);
+    auto indexMsg = receiveMessage(hostFd, 2);
     int index = std::stoi(indexMsg[1]);
 
     Questions q(questionMsg[1], answers);
@@ -154,7 +155,7 @@ Questions Game::createQuestion(const int questionNum)
 
 void Game::handleResponse(const int& fd)
 {   
-    auto message = receiveMessage(fd);
+    auto message = receiveMessage(fd, 1);
 
     if ((message[0] == "joinGame") || (message[0] == "createGame"))
     {
@@ -207,10 +208,10 @@ bool Game::acceptClient()
 void Game::setupGame()
 {
     const int hostFd = mPolls[1].fd;
-    auto questionsMsg = receiveMessage(hostFd);
+    auto questionsMsg = receiveMessage(hostFd, 2);
     const int questionsNum = std::stoi(questionsMsg[1]);
 
-    auto timesMsg = receiveMessage(hostFd);
+    auto timesMsg = receiveMessage(hostFd, 2);
     mTimePerQuestion = std::stoi(timesMsg[1]);
 
     for (int i = 0; i < questionsNum; ++i)
