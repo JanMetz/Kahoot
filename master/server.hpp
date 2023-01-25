@@ -18,9 +18,10 @@
 class Server
 {
 public:
-    Server(const long port, const std::string &addr);
+    Server(const long port);
     ~Server();
 
+	bool isUp();
     bool setupSocket();
     virtual void run();
 
@@ -39,7 +40,6 @@ public:
 protected:
     int mSock;
     unsigned long mPort;
-    std::string mIpAddr;
     sockaddr_in mAddrStruct;
     std::vector<struct pollfd> mPolls;
 
