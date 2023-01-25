@@ -9,7 +9,7 @@
 #include <string>
 #include <thread>
 
-Game::Game(const long port, const std::string& addr) : Server(port, addr), mRun(true)
+Game::Game(const long port) : Server(port), mRun(true)
 {
     
 }

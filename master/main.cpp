@@ -2,9 +2,10 @@
 
 int main(int argc, char* argv[])
 {
-    Server server(22, "localhost");
-    server.run();
+    Server server(8080);
+    
+    if (server.isUp())
+		server.run();
 
     return 0;
 }
-

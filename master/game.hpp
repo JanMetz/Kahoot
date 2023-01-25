@@ -14,7 +14,7 @@
 class Game : public Server
 {
 public:
-    Game(const long port, const std::string& addr);
+    Game(const long port);
     void runTheGame();
 
 private:
