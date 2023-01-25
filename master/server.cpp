@@ -24,8 +24,7 @@
 
 Server::Server(const long port) : mPort(port), mPolls({})
 {
-    mDebugFile.open("server_d.log", std::ios::app);
-    mDebugFile << "opening server";
+    log("opening server");
 
     if ((!setupSocket()) || (!openConnection()))
         return;
@@ -34,7 +33,6 @@ Server::Server(const long port) : mPort(port), mPolls({})
 Server::~Server()
 {
     closeConnection();
-    mDebugFile.close();
 }
 
 bool Server::isUp()
@@ -51,7 +49,7 @@ bool Server::setupSocket()
     mSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(mSock == -1)
     {
-        mDebugFile << "socket failed";
+        log("Socket failed");
         return false;
     }
 
@@ -65,14 +63,14 @@ bool Server::openConnection()
 {
     if(bind(mSock, (sockaddr*) &mAddrStruct, sizeof(mAddrStruct)))
     {
-        mDebugFile << "bind failed";
+        log("bind failed");
         return false;
     }
 
     const int connectionsNum = 5;
     if(listen(mSock, connectionsNum))
     {
-        mDebugFile << "listen failed";
+        log("listen failed");
         return false;
     }
 
@@ -82,12 +80,14 @@ bool Server::openConnection()
 
     mPolls.push_back(poll);
 
+     log("Connection opened");
+
     return true;
 }
 
 void Server::closeConnection()
 {
-	mDebugFile << "closing server";
+	log("closing server");
     close(mSock);
 
     for (auto &client : mPolls)
@@ -102,7 +102,7 @@ bool Server::acceptClient()
     int clientFd = accept(mSock, nullptr, nullptr);
     if(clientFd == -1)
     {
-        mDebugFile << "accept failed";
+        log("accept failed");
         return false;
     }
 
@@ -111,6 +111,8 @@ bool Server::acceptClient()
     poll.events = POLLIN;
 
     mPolls.push_back(poll);
+
+     log("New client accepted");
 
     return true;
 }
@@ -123,6 +125,7 @@ void Server::handleResponse(const int& fd)
     if ((message[0] == "joinGame") && (mGames.find(msgCode) != mGames.end()))
     {
         sendMessage(std::string("gamePort:") + std::to_string(mGames[msgCode]), fd);
+         log("Join request received");
     }
 
     if (message[0] == "createGame")
@@ -154,11 +157,13 @@ void Server::handleResponse(const int& fd)
                 sendMessage(std::string("gamePort:") + std::to_string(port), fd);
                 
                 success = true;
+
+                log("New game created");
             }
             catch (...)
             {
                 delete game;
-                mDebugFile << "Cannot assign port " << port << std::endl;
+                log(std::string("Cannot assign port ") + std::to_string(port));
             }
         }
 
@@ -205,7 +210,7 @@ std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
 
     if (ret.size() < minSize)
     {
-        mDebugFile << "Received message has invalid size\n";
+        log("Received message has invalid size");
         return {"1","2","3","4","5","6","7","8"}; // so it will not crash
     }
 
@@ -218,7 +223,7 @@ void Server::run()
     {
         int res = poll(mPolls.data(), mPolls.size(), -1);
         if (res == -1)
-			mDebugFile << "Poll failed\n";
+			log("Poll failed\n");
 
         for (auto &client : mPolls)
         {
@@ -244,4 +249,11 @@ int Server::generateCode() const
         code = distrib(gen);
 
     return code;
+}
+
+void Server::log(const std::string &msg)
+{
+    mDebugFile.open("server_d.log", std::ios::app);
+    mDebugFile << msg << std::endl;
+    mDebugFile.close();
 }

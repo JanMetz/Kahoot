@@ -24,6 +24,7 @@ public:
 	bool isUp();
     bool setupSocket();
     virtual void run();
+    void log(const std::string &msg);
 
     bool openConnection();
     void closeConnection();

@@ -17,6 +17,7 @@ Game::Game(const long port) : Server(port), mRun(true)
 void Game::runTheGame()
 {
     broadcastMessage(std::string("theGameStarts"));
+    log(std::string("Game started ") + std::to_string(mPort));
     mTrafficClosed = true;
 
     for (const auto question : mQuestions)
@@ -43,6 +44,7 @@ void Game::runTheGame()
     }
 
     broadcastMessage(std::string("theGameEnds"));
+    log(std::string("Game ended ") + std::to_string(mPort));
     broadcastPunctation();
     mRun = false;
 }
@@ -95,6 +97,7 @@ bool Game::addPlayer(const int clientFd)
     if (mPunctation.find(nickMsg[1]) != mPunctation.end())
     {
         sendMessage(std::string("rejected"), clientFd);
+        log(std::string("Player rejected ") + std::to_string(mPort));
         return false;
     }
     else
@@ -109,6 +112,8 @@ bool Game::addPlayer(const int clientFd)
     }
 
     broadcastMessage(allNicks);
+
+    log(std::string("Player added ") + std::to_string(mPort));
     
     return true;
 }
@@ -127,6 +132,8 @@ void Game::removePlayer(const int fd, const std::string &nick)
 
     mPolls.erase(it);
     mPunctation.erase(mPunctation.find(nick));
+
+    log(std::string("Player removed ") + std::to_string(mPort));
 }
 
 Questions Game::createQuestion(const int questionNum)
@@ -186,7 +193,7 @@ bool Game::acceptClient()
     int clientFd = accept(mSock, nullptr, nullptr);
     if (clientFd == -1)
     {
-        mDebugFile << "accept failed";
+        log(std::string("Accept failed ") + std::to_string(mPort));
         return false;
     }
 
