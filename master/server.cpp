@@ -22,11 +22,12 @@
 #include <fstream>
 #include <random>
 
-Server::Server(const long port, const std::string &addr) : mPort(port), mIpAddr(addr)
+Server::Server(const long port) : mPort(port), mPolls({})
 {
-    mDebugFile.open("server_d.log", std::ios::app );
+    mDebugFile.open("server_d.log", std::ios::app);
+    mDebugFile << "opening server";
 
-    if ((!openConnection()) || (!setupSocket()))
+    if ((!setupSocket()) || (!openConnection()))
         return;
 }
 
@@ -34,6 +35,11 @@ Server::~Server()
 {
     closeConnection();
     mDebugFile.close();
+}
+
+bool Server::isUp()
+{
+	return mSock != -1 && mPolls.size() >= 1;
 }
 
 bool Server::setupSocket()
@@ -63,7 +69,7 @@ bool Server::openConnection()
         return false;
     }
 
-    const int connectionsNum = 1;
+    const int connectionsNum = 5;
     if(listen(mSock, connectionsNum))
     {
         mDebugFile << "listen failed";
@@ -81,6 +87,7 @@ bool Server::openConnection()
 
 void Server::closeConnection()
 {
+	mDebugFile << "closing server";
     close(mSock);
 
     for (auto &client : mPolls)
@@ -131,7 +138,13 @@ void Server::handleResponse(const int& fd)
 
             try
             {
-                game = new Game(port, "localhost");
+                game = new Game(port);
+                if (!game->isUp())
+                {
+					delete game;
+					continue;
+				}
+				
                 std::thread th(&Server::run, game);
                 th.detach();
 
@@ -198,6 +211,8 @@ void Server::run()
     while(true)
     {
         int res = poll(mPolls.data(), mPolls.size(), -1);
+        if (res == -1)
+			mDebugFile << "Poll failed\n";
 
         for (auto &client : mPolls)
         {
