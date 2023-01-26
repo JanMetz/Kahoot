@@ -22,10 +22,13 @@ public:
     ~Server();
 
 	bool isUp();
-    bool setupSocket();
+    
     virtual void run();
+    bool establishConnection();
     void log(const std::string &msg);
 
+protected:
+    bool setupSocket();
     bool openConnection();
     void closeConnection();
     
@@ -37,7 +40,6 @@ public:
 
     int generateCode() const;
 
-protected:
     int mSock;
     unsigned long mPort;
     sockaddr_in mAddrStruct;

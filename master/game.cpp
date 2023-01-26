@@ -11,7 +11,7 @@
 
 Game::Game(const long port) : Server(port), mRun(true)
 {
-    
+    bool unused = establishConnection();
 }
 
 void Game::runTheGame()

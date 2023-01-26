@@ -28,11 +28,6 @@ Server::Server(const long port) : mPort(port), mPolls({})
     //cleaning up log file
     mDebugFile.open("server_d.log");
     mDebugFile.close(); 
-
-    log("opening server");
-
-    if ((!setupSocket()) || (!openConnection()))
-        return;
 }
 
 Server::~Server()
@@ -43,6 +38,12 @@ Server::~Server()
 bool Server::isUp()
 {
 	return mSock != -1 && mPolls.size() >= 1;
+}
+
+bool Server::establishConnection()
+{
+    log("opening server");
+    return (!setupSocket()) || (!openConnection());
 }
 
 bool Server::setupSocket()
@@ -252,7 +253,10 @@ int Server::generateCode() const
 
 void Server::log(const std::string &msg)
 {
+    auto timepoint = std::chrono::system_clock::now();
+    time_t now = std::chrono::system_clock::to_time_t(timepoint);
+
     mDebugFile.open("server_d.log", std::ios::app);
-    mDebugFile << msg << std::endl;
+    mDebugFile << ctime(&now) << '\t' << msg << std::endl;
     mDebugFile.close();
 }
