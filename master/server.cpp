@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <unistd.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -24,6 +25,10 @@
 
 Server::Server(const long port) : mPort(port), mPolls({})
 {
+    //cleaning up log file
+    mDebugFile.open("server_d.log");
+    mDebugFile.close(); 
+
     log("opening server");
 
     if ((!setupSocket()) || (!openConnection()))
@@ -112,20 +117,19 @@ bool Server::acceptClient()
 
     mPolls.push_back(poll);
 
-     log("New client accepted");
+    log("New client accepted");
 
     return true;
 }
 
 void Server::handleResponse(const int& fd)
 {
-    auto message = receiveMessage(fd);
-    const int msgCode = std::stoi(message[1]);
-
-    if ((message[0] == "joinGame") && (mGames.find(msgCode) != mGames.end()))
+    auto message = receiveMessage(1);
+    
+    if ((message[0] == "joinGame") && (message.size()) > 1 && (mGames.find(std::stoi(message[1])) != mGames.end()))
     {
-        sendMessage(std::string("gamePort:") + std::to_string(mGames[msgCode]), fd);
-         log("Join request received");
+        sendMessage(std::string("gamePort:") + std::to_string(mGames[std::stoi(message[1])]));
+        log("Join request received");
     }
 
     if (message[0] == "createGame")
@@ -153,8 +157,8 @@ void Server::handleResponse(const int& fd)
 
                 mGames[code] = port;
 
-                sendMessage(std::string("gameCode:") + std::to_string(code), fd);
-                sendMessage(std::string("gamePort:") + std::to_string(port), fd);
+                sendMessage(std::string("gameCode:") + std::to_string(code));
+                sendMessage(std::string("gamePort:") + std::to_string(port));
                 
                 success = true;
 
@@ -171,24 +175,19 @@ void Server::handleResponse(const int& fd)
     }
 }
 
-void Server::sendMessage(const std::string& msgBody, const int fd)
+void Server::sendMessage(const std::string& msgBody)
 {
-    send(fd, msgBody.data(), sizeof(msgBody), 0);
+    if (write(mSock, msgBody.data(), sizeof(msgBody)) == -1)
+        log("Error while sending data.");
 }
 
-void Server::broadcastMessage(const std::string& msg)
-{
-    for (const auto& client : mPolls)
-    {
-        sendMessage(msg, client.fd);
-    }
-}
-
-std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
+std::vector<std::string> Server::receiveMessage(const int minSize)
 {
     char answer[200];
     int len;
-    recv(fd, answer, len, 0);
+    if (read(mSock, answer, len) == -1)
+        log("Error receiving sending data.");
+
     auto s = std::string(answer);
 
     auto tokenize = [&](std::vector<std::string>& vec, const std::string& delimiter) {
