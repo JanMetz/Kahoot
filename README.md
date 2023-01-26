@@ -32,5 +32,5 @@ cd build
 make
 ./Kahoot_client
 
-g++ main.cpp server.cpp game.cpp questions.cpp -lpthread
+g++ -std=c++17 -o server.exe main.cpp server.cpp game.cpp questions.cpp -lpthread
 ```
