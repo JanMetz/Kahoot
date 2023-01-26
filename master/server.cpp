@@ -200,13 +200,13 @@ std::vector<std::string> Server::receiveMessage(const int minSize)
             vec.push_back(token);
             s.erase(0, pos + delimiter.length());
         }
+
+        if (s.length() > 0)
+            vec.push_back(s);
     };
     
-    std::vector<std::string> tmp;
-    tokenize(tmp, ";");
     std::vector<std::string> ret;
-    for (auto& s : tmp)
-        tokenize(ret, ":");
+    tokenize(ret, ":");
 
     if (ret.size() < minSize)
     {

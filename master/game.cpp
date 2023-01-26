@@ -28,9 +28,9 @@ void Game::runTheGame()
 
         sendMessage(std::string("question:") + question.getQuestionBody());
 
-        std::string answers = "";
+        std::string answers = "answer:";
         for (auto& answer : question.getAnswers())
-            answers += std::string("answer:") + answer + ";";
+            answers += answer + ":";
 
         sendMessage(answers);
 
@@ -54,7 +54,7 @@ void Game::broadcastPunctation()
     std::string msg = "punctation:";
     for (auto& punct : mPunctation)
     {
-        msg = msg + punct.first + ":" + std::to_string(punct.second) + ";";
+        msg = msg + punct.first + ":" + std::to_string(punct.second) + ":";
     }
 
     sendMessage(msg);
@@ -108,7 +108,7 @@ bool Game::addPlayer(const int clientFd)
     std::string allNicks = "allNicks:";
     for (auto& nick : mPunctation)
     {
-        allNicks += nick.first + ";";
+        allNicks += nick.first + ":";
     }
 
     sendMessage(allNicks);
