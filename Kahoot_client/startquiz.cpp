@@ -54,5 +54,5 @@ void StartQuiz::socketDisconnected(){
 
 void StartQuiz::socketReadable(){
     QByteArray ba = sock->readAll();
-
+    addPlayer(QString(ba));
 }

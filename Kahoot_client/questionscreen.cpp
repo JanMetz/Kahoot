@@ -70,5 +70,5 @@ void QuestionScreen::socketDisconnected(){
 
 void QuestionScreen::socketReadable(){
     QByteArray ba = sock->readAll();
-
+    ui->textQuestion->setText(QString(ba));
 }

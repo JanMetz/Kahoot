@@ -36,4 +36,20 @@ void Lobby::socketReadable(){
         wdg->show();
         this->close();
     }
+    addPlayer(msg);
+}
+
+void Lobby::addPlayer(QString player){
+    QListWidgetItem *item;
+    item = new QListWidgetItem(player);
+    ui->listWidget->addItem(item);
+}
+
+void Lobby::removePlayer(QString player){
+    QList<QListWidgetItem *> l;
+    l = ui->listWidget->findItems(player, Qt::MatchExactly);;
+    for(auto x: l){
+        ui->listWidget->removeItemWidget(x);
+        delete x;
+    }
 }
