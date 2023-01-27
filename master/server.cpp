@@ -43,7 +43,7 @@ bool Server::isUp()
 bool Server::establishConnection()
 {
     log("opening server");
-    return (!setupSocket()) || (!openConnection());
+    return setupSocket() && openConnection();
 }
 
 bool Server::setupSocket()
@@ -94,7 +94,6 @@ bool Server::openConnection()
 void Server::closeConnection()
 {
 	log("closing server");
-    close(mSock);
 
     for (auto &client : mPolls)
     {
