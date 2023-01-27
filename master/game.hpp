@@ -29,6 +29,7 @@ private:
     void broadcastPunctation();
    
     void handleResponse(const int& fd) override;
+    void broadcastMessage(const std::string& msgBody);
     bool acceptClient() override;
     void run() override;
     

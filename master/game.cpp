@@ -16,7 +16,7 @@ Game::Game(const long port) : Server(port), mRun(true)
 
 void Game::runTheGame()
 {
-    sendMessage(std::string("theGameStarts"));
+    broadcastMessage(std::string("theGameStarts"));
     log(std::string("Game started ") + std::to_string(mPort));
     mTrafficClosed = true;
 
@@ -26,13 +26,13 @@ void Game::runTheGame()
         mGotAllAnswers = false;
         mCurrentCorrectAnswer = "";
 
-        sendMessage(std::string("question:") + question.getQuestionBody());
+        broadcastMessage(std::string("question:") + question.getQuestionBody());
 
         std::string answers = "answer:";
         for (auto& answer : question.getAnswers())
             answers += answer + ":";
 
-        sendMessage(answers);
+        broadcastMessage(answers);
 
         mCurrentCorrectAnswer = question.getCorrectAnswer();
         mBroadcastTimepoint = std::chrono::high_resolution_clock::now();
@@ -43,7 +43,7 @@ void Game::runTheGame()
         broadcastPunctation();  
     }
 
-    sendMessage(std::string("theGameEnds"));
+    broadcastMessage(std::string("theGameEnds"));
     log(std::string("Game ended ") + std::to_string(mPort));
     broadcastPunctation();
     mRun = false;
@@ -57,7 +57,7 @@ void Game::broadcastPunctation()
         msg = msg + punct.first + ":" + std::to_string(punct.second) + ":";
     }
 
-    sendMessage(msg);
+    broadcastMessage(msg);
 }
 
 void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowiedzi answer:OdpowiedzTekstem;player:NickGracza;timestamp:CzasOddaniaOdpowiedzi;
@@ -92,16 +92,16 @@ double Game::calculatePoints(const std::vector<std::string> &msg) const
 
 bool Game::addPlayer(const int clientFd)
 {
-    auto nickMsg = receiveMessage(2);
+    auto nickMsg = receiveMessage(clientFd, 2);
 
     if (mPunctation.find(nickMsg[1]) != mPunctation.end())
     {
-        sendMessage(std::string("rejected"));
+        sendMessage(clientFd, std::string("rejected"));
         log(std::string("Player rejected ") + std::to_string(mPort));
         return false;
     }
     else
-        sendMessage(std::string("accepted"));
+        sendMessage(clientFd, std::string("accepted"));
 
     mPunctation[nickMsg[1]] = 0;
 
@@ -111,7 +111,7 @@ bool Game::addPlayer(const int clientFd)
         allNicks += nick.first + ":";
     }
 
-    sendMessage(allNicks);
+    sendMessage(clientFd, allNicks);
 
     log(std::string("Player added ") + std::to_string(mPort));
     
@@ -139,19 +139,19 @@ void Game::removePlayer(const int fd, const std::string &nick)
 Questions Game::createQuestion(const int questionNum)
 {
     const int hostFd = mPolls.at(1).fd;
-    sendMessage(std::string("sendQuestion:") + std::to_string(questionNum));
-    auto questionMsg = receiveMessage(2);
+    sendMessage(hostFd, std::string("sendQuestion:") + std::to_string(questionNum));
+    auto questionMsg = receiveMessage(hostFd, 2);
 
     std::array<std::string, 4> answers;
     for (int j = 0; j < 4; ++j)
     {
-        sendMessage(std::string("sendAnswer:") + std::to_string(j));
-        auto answerMsg = receiveMessage(2);
+        sendMessage(hostFd, std::string("sendAnswer:") + std::to_string(j));
+        auto answerMsg = receiveMessage(hostFd, 2);
         answers[j] = answerMsg[1];
     }
 
-    sendMessage(std::string("provideCorrectMsgIndex"));
-    auto indexMsg = receiveMessage(2);
+    sendMessage(hostFd, std::string("provideCorrectMsgIndex"));
+    auto indexMsg = receiveMessage(hostFd, 2);
     int index = std::stoi(indexMsg[1]);
 
     Questions q(questionMsg[1], answers);
@@ -162,7 +162,7 @@ Questions Game::createQuestion(const int questionNum)
 
 void Game::handleResponse(const int& fd)
 {   
-    auto message = receiveMessage(1);
+    auto message = receiveMessage(fd, 1);
 
     if ((message[0] == "joinGame") || (message[0] == "createGame"))
     {
@@ -183,6 +183,12 @@ void Game::handleResponse(const int& fd)
     {
         removePlayer(fd, message[1]);
     }
+}
+
+void Game::broadcastMessage(const std::string& msgBody)
+{
+    for (auto &client : mPolls)
+        sendMessage(client.fd, msgBody);
 }
 
 bool Game::acceptClient()
@@ -215,10 +221,10 @@ bool Game::acceptClient()
 void Game::setupGame()
 {
     const int hostFd = mPolls[1].fd;
-    auto questionsMsg = receiveMessage(2);
+    auto questionsMsg = receiveMessage(hostFd, 2);
     const int questionsNum = std::stoi(questionsMsg[1]);
 
-    auto timesMsg = receiveMessage(2);
+    auto timesMsg = receiveMessage(hostFd, 2);
     mTimePerQuestion = std::stoi(timesMsg[1]);
 
     for (int i = 0; i < questionsNum; ++i)

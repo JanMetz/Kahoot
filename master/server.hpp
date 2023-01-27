@@ -35,8 +35,8 @@ protected:
     virtual void handleResponse(const int& fd);
     virtual bool acceptClient();
 
-    void sendMessage(const std::string& msgBody);
-    std::vector<std::string> receiveMessage(const int minSize = 1);
+    void sendMessage(const int fd, const std::string& msgBody);
+    std::vector<std::string> receiveMessage(const int fd, const int minSize = 1);
 
     int generateCode() const;
 

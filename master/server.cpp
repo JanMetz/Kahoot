@@ -124,11 +124,11 @@ bool Server::acceptClient()
 
 void Server::handleResponse(const int& fd)
 {
-    auto message = receiveMessage(1);
+    auto message = receiveMessage(fd, 1);
     
     if ((message[0] == "joinGame") && (message.size()) > 1 && (mGames.find(std::stoi(message[1])) != mGames.end()))
     {
-        sendMessage(std::string("gamePort:") + std::to_string(mGames[std::stoi(message[1])]));
+        sendMessage(fd, std::string("gamePort:") + std::to_string(mGames[std::stoi(message[1])]));
         log("Join request received");
     }
 
@@ -157,8 +157,8 @@ void Server::handleResponse(const int& fd)
 
                 mGames[code] = port;
 
-                sendMessage(std::string("gameCode:") + std::to_string(code));
-                sendMessage(std::string("gamePort:") + std::to_string(port));
+                sendMessage(fd, std::string("gameCode:") + std::to_string(code));
+                sendMessage(fd, std::string("gamePort:") + std::to_string(port));
                 
                 success = true;
 
@@ -175,17 +175,17 @@ void Server::handleResponse(const int& fd)
     }
 }
 
-void Server::sendMessage(const std::string& msgBody)
+void Server::sendMessage(const int fd, const std::string& msgBody)
 {
-    if (write(mSock, msgBody.data(), sizeof(msgBody)) == -1)
+    if (write(fd, msgBody.data(), sizeof(msgBody)) == -1)
         log("Error while sending data.");
 }
 
-std::vector<std::string> Server::receiveMessage(const int minSize)
+std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
 {
     char answer[1024];
     int len = 1024;
-    if (read(mSock, answer, len) == -1)
+    if (read(fd, answer, len) == -1)
         log("Error while receiving data.");
 
     auto s = std::string(answer);
