@@ -183,10 +183,10 @@ void Server::sendMessage(const std::string& msgBody)
 
 std::vector<std::string> Server::receiveMessage(const int minSize)
 {
-    char answer[200];
-    int len;
+    char answer[256];
+    int len = 256;
     if (read(mSock, answer, len) == -1)
-        log("Error receiving sending data.");
+        log("Error while receiving data.");
 
     auto s = std::string(answer);
 
