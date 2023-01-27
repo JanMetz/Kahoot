@@ -31,6 +31,7 @@ private:
     int numberOfQuestions;
     int time;
     int port;
+    int code;
     std::vector<std::array<QString, 6>> questions;
     QString adres;
     QTcpSocket * sock {nullptr};
@@ -38,7 +39,6 @@ private:
     void socketConnected();
     void socketDisconnected();
     void socketError(QTcpSocket::SocketError);
-    void socketReadable();
     void connectToServer();
     void sendQuestions();
 };

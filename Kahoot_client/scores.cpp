@@ -42,5 +42,5 @@ void scores::removePlayer(QString player){
 
 void scores::socketReadable(){
     QByteArray ba = sock->readAll();
-
+    addPlayer(QString(ba));
 }

@@ -32,7 +32,10 @@ ConnectScreen::ConnectScreen(QMainWindow* m, int n, int t,
 void ConnectScreen::accept(){
     connect(sock, &QTcpSocket::readyRead, this, [&]{
         QByteArray ba = sock->readAll();
-        port = ba.toInt();
+        QString msg = QString(ba);
+        QStringList list = msg.split(";");
+        code = list[0].toInt();
+        port = list[1].toInt();
         sock->close();
         if(sock)
             delete sock;
@@ -40,15 +43,17 @@ void ConnectScreen::accept(){
         connect(sock, &QTcpSocket::connected, this, &ConnectScreen::sendQuestions);
         connectToServer();
     });
-    sock->write(QString("createGame").toUtf8());
+    sock->write(QString("createGame:").toUtf8());
 
 }
 
 void ConnectScreen::sendQuestions(){
-    connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketConnected);
+    //connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
+    QString msg = "nick:creator";
+    sock->write(msg.toUtf8());
     QString n = QString("numOfQuestions:") + QString::number(numberOfQuestions);
     sock->write(n.toUtf8());
-    QString t = QString("Time:") + QString::number(time);
+    QString t = QString("time:") + QString::number(time);
     sock->write(t.toUtf8());
     for(std::array<QString, 6> &i :questions){
         QString q = QString("question:") + i[0];
@@ -64,6 +69,9 @@ void ConnectScreen::sendQuestions(){
         QString c = QString("correctAnswerIndex:") + i[5];
         sock->write(c.toUtf8());
     }
+    QWidget *wdg = new StartQuiz(mainWindow, sock, code);
+    wdg->show();
+    this->close();
 }
 
 void ConnectScreen::reject(){
@@ -100,13 +108,6 @@ void ConnectScreen::socketError(QTcpSocket::SocketError err){
     ui->buttonBox->setEnabled(true);
 }
 
-void ConnectScreen::socketReadable(){
-    QByteArray ba = sock->readAll();
-    int code = ba.toInt();
-    QWidget *wdg = new StartQuiz(mainWindow, sock, code);
-    wdg->show();
-    this->close();
-}
 
 void ConnectScreen::connectToServer(){
 
@@ -122,8 +123,7 @@ void ConnectScreen::connectToServer(){
     });
 
     connect(sock, &QTcpSocket::disconnected, this, &ConnectScreen::socketDisconnected);
-    connect(sock, &QTcpSocket::errorOccurred, this, &ConnectScreen::socketError);
-
+    connect(sock, &QTcpSocket::errorOccurred, this, &ConnectScreen::socketError);    
     sock->connectToHost(QString(adres), port);
     connTimeoutTimer->start(3000);
 }
