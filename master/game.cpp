@@ -9,7 +9,7 @@
 #include <string>
 #include <thread>
 
-Game::Game(const long port) : Server(port), mRun(true)
+Game::Game(const long port) : Server(port), mRun(true), mTrafficClosed(false)
 {
     bool unused = establishConnection();
 }

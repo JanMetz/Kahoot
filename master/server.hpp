@@ -15,6 +15,8 @@
 #include <map>
 #include <fstream>
 
+class Game;
+
 class Server
 {
 public:
@@ -48,6 +50,9 @@ protected:
     std::map<int, int> mGames; //mGames[code] = port;
 
     std::ofstream mDebugFile;
+
+private:
+    std::vector<Game*> mCreatedGames;
 };
 
 #endif

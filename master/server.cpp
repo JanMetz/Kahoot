@@ -33,6 +33,9 @@ Server::Server(const long port) : mPort(port), mPolls({})
 Server::~Server()
 {
     closeConnection();
+    for (auto &game : mCreatedGames)
+        if (game)
+            delete game;
 }
 
 bool Server::isUp()
@@ -149,6 +152,7 @@ void Server::handleResponse(const int& fd)
                 if (!game->isUp())
                 {
 					delete game;
+                    log(std::string("Unable to set the game up"));
 					continue;
 				}
 				
@@ -163,6 +167,7 @@ void Server::handleResponse(const int& fd)
                 success = true;
 
                 log("New game created");
+                mCreatedGames.push_back(game);
             }
             catch (...)
             {
@@ -170,8 +175,6 @@ void Server::handleResponse(const int& fd)
                 log(std::string("Cannot assign port ") + std::to_string(port));
             }
         }
-
-        delete game;
     }
 }
 
