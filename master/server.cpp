@@ -161,8 +161,8 @@ void Server::handleResponse(const int& fd)
 
                 mGames[code] = port;
 
-                sendMessage(fd, std::string("gameCode:") + std::to_string(code));
-                sendMessage(fd, std::string("gamePort:") + std::to_string(port));
+                sendMessage(fd,  std::to_string(code) + std::string(";"));
+                sendMessage(fd, std::to_string(port) + std::string(";"));
                 
                 success = true;
 
@@ -180,7 +180,9 @@ void Server::handleResponse(const int& fd)
 
 void Server::sendMessage(const int fd, const std::string& msgBody)
 {
-    if (write(fd, msgBody.data(), sizeof(msgBody)) == -1)
+    char* char_array = new char[msgBody.length() + 1];
+    strcpy(char_array, msgBody.data());
+    if (write(fd, char_array, strlen(char_array)) == -1)
         log("Error while sending data.");
 }
 

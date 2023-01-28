@@ -12,7 +12,7 @@ class CurrentScores : public QWidget
     Q_OBJECT
 
 public:
-    explicit CurrentScores(QWidget *parent = nullptr);
+    explicit CurrentScores(QString scores, QWidget *parent = nullptr);
     ~CurrentScores();
 
 private:

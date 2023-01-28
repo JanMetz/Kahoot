@@ -1,11 +1,12 @@
 #include "currentscores.h"
 #include "ui_currentscores.h"
 
-CurrentScores::CurrentScores(QWidget *parent) :
+CurrentScores::CurrentScores(QString scores, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::CurrentScores)
 {
     ui->setupUi(this);
+    addPlayer(scores);
 }
 
 CurrentScores::~CurrentScores()

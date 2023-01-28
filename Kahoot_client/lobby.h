@@ -25,6 +25,8 @@ private:
     bool closeSocket;
     void socketDisconnected();
     void socketReadable();
+    void addPlayer(QString player);
+    void removePlayer(QString plyayer);
 };
 
 #endif // LOBBY_H
