@@ -12,6 +12,8 @@ ConnectScreen::ConnectScreen(QMainWindow* m, int n, int t,
     mainWindow = m;
     numberOfQuestions = n;
     time = t;
+    i = 0;
+    num = 0;
     questions = q;
     QFile file(":/config.txt");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -48,30 +50,9 @@ void ConnectScreen::accept(){
 }
 
 void ConnectScreen::sendQuestions(){
-    //connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
-    QString msg = "nick:creator";
+    connect(sock, &QTcpSocket::readyRead, this, [&] {});
+    QString msg = "creator;" + QString::number(numberOfQuestions) + ";" + QString::number(time);
     sock->write(msg.toUtf8());
-    QString n = QString("numOfQuestions:") + QString::number(numberOfQuestions);
-    sock->write(n.toUtf8());
-    QString t = QString("time:") + QString::number(time);
-    sock->write(t.toUtf8());
-    for(std::array<QString, 6> &i :questions){
-        QString q = QString("question:") + i[0];
-        sock->write(q.toUtf8());
-        QString a1 = QString("answer:") + i[1];
-        sock->write(a1.toUtf8());
-        QString a2 = QString("answer:") + i[2];
-        sock->write(a2.toUtf8());
-        QString a3 = QString("answer:") + i[3];
-        sock->write(a3.toUtf8());
-        QString a4 = QString("answer:") + i[4];
-        sock->write(a4.toUtf8());
-        QString c = QString("correctAnswerIndex:") + i[5];
-        sock->write(c.toUtf8());
-    }
-    QWidget *wdg = new StartQuiz(mainWindow, sock, code);
-    wdg->show();
-    this->close();
 }
 
 void ConnectScreen::reject(){
@@ -126,4 +107,34 @@ void ConnectScreen::connectToServer(){
     connect(sock, &QTcpSocket::errorOccurred, this, &ConnectScreen::socketError);    
     sock->connectToHost(QString(adres), port);
     connTimeoutTimer->start(3000);
+}
+
+void ConnectScreen::socketReadable(){
+    QByteArray ba =sock->readAll();
+    qDebug() << QString(ba);
+    if (QString(ba) != "sendQuestion:" && QString(ba) != "sendAnswer:" ||
+            QString(ba) != "provideCorrectMsgIndex") {
+         qDebug() << "return";
+        return;
+    }
+    qDebug() <<"send";
+    if(i == 0) {
+        QString q = QString("question:") + questions[num][i];
+        sock->write(q.toUtf8());
+        i++;
+    } else if (i > 0 && i < 5) {
+        QString q = QString("answer:") + questions[num][i];
+        sock->write(q.toUtf8());
+        i++;
+    } else {
+        QString q = QString("correctAnswerIndex:") + questions[num][i];
+        sock->write(q.toUtf8());
+        num++;
+        i = 0;
+        if (num > numberOfQuestions) {
+            QWidget *wdg = new StartQuiz(mainWindow, sock, code);
+            wdg->show();
+            this->close();
+        }
+    }
 }
