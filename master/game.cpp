@@ -16,7 +16,7 @@ Game::Game(const long port) : Server(port), mRun(true), mTrafficClosed(false)
 
 void Game::runTheGame()
 {
-    broadcastMessage(std::string("theGameStarts"));
+    broadcastMessage(std::string("theGameStarts:"));
     log(std::string("Game started ") + std::to_string(mPort));
     mTrafficClosed = true;
 
@@ -43,7 +43,7 @@ void Game::runTheGame()
         broadcastPunctation();  
     }
 
-    broadcastMessage(std::string("theGameEnds"));
+    broadcastMessage(std::string("theGameEnds:"));
     log(std::string("Game ended ") + std::to_string(mPort));
     broadcastPunctation();
     mRun = false;
@@ -60,7 +60,7 @@ void Game::broadcastPunctation()
     broadcastMessage(msg);
 }
 
-void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowiedzi answer:OdpowiedzTekstem;player:NickGracza;timestamp:CzasOddaniaOdpowiedzi;
+void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowiedzi OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
 {
     using namespace std::chrono;
 
@@ -69,7 +69,7 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
 
     if (elapsed < mTimePerQuestion && mAnswersNum < twoThirds)
     {
-        mPunctation[msg[3]] += calculatePoints(msg);
+        mPunctation[msg[1]] += calculatePoints(msg);
         mAnswersNum++;
     }
     else
@@ -80,9 +80,9 @@ double Game::calculatePoints(const std::vector<std::string> &msg) const
 {
     using namespace std::chrono;
 
-    if (mCurrentCorrectAnswer == msg[1])
+    if (mCurrentCorrectAnswer == msg[0])
     {
-        long dur = std::stol(msg[5]) - mBroadcastTimepoint.time_since_epoch().count();
+        long dur = std::stol(msg[2]) - mBroadcastTimepoint.time_since_epoch().count();
 
         return (dur / mTimePerQuestion) * 1000;
     }
@@ -96,12 +96,12 @@ bool Game::addPlayer(const int clientFd)
 
     if (mPunctation.find(nickMsg[1]) != mPunctation.end())
     {
-        sendMessage(clientFd, std::string("rejected"));
+        sendMessage(clientFd, std::string("rejected:"));
         log(std::string("Player rejected ") + std::to_string(mPort));
         return false;
     }
     else
-        sendMessage(clientFd, std::string("accepted"));
+        sendMessage(clientFd, std::string("accepted:"));
 
     mPunctation[nickMsg[1]] = 0;
 
@@ -133,25 +133,33 @@ void Game::removePlayer(const int fd, const std::string &nick)
     mPolls.erase(it);
     mPunctation.erase(mPunctation.find(nick));
 
-    log(std::string("Player removed ") + std::to_string(mPort));
+    log(std::string("Player ") + nick + std::string("removed ") + std::to_string(mPort));
 }
 
 Questions Game::createQuestion(const int questionNum)
 {
     const int hostFd = mPolls.at(1).fd;
     sendMessage(hostFd, std::string("sendQuestion:") + std::to_string(questionNum));
+
     auto questionMsg = receiveMessage(hostFd, 2);
+    log(std::string("Question ") + std::to_string(questionNum) + ": " + questionMsg[0] + " " + questionMsg[1]);
 
     std::array<std::string, 4> answers;
     for (int j = 0; j < 4; ++j)
     {
         sendMessage(hostFd, std::string("sendAnswer:") + std::to_string(j));
+
         auto answerMsg = receiveMessage(hostFd, 2);
+        log(std::string("Answer ") + std::to_string(j) + ": " + answerMsg[0] + " " + answerMsg[1]);
+
         answers[j] = answerMsg[1];
     }
 
     sendMessage(hostFd, std::string("provideCorrectMsgIndex"));
+
     auto indexMsg = receiveMessage(hostFd, 2);
+    log(std::string("Correct answer index: ") + indexMsg[0] + " " + indexMsg[1]);
+
     int index = std::stoi(indexMsg[1]);
 
     Questions q(questionMsg[1], answers);
@@ -221,11 +229,9 @@ bool Game::acceptClient()
 void Game::setupGame()
 {
     const int hostFd = mPolls[1].fd;
-    auto questionsMsg = receiveMessage(hostFd, 2);
-    const int questionsNum = std::stoi(questionsMsg[1]);
-
-    auto timesMsg = receiveMessage(hostFd, 2);
-    mTimePerQuestion = std::stoi(timesMsg[1]);
+    auto setupMsg = receiveMessage(hostFd, 2);  //format odpowiedzi IloscPytanwQuizie:SekundNaPytanie:
+    const int questionsNum = std::stoi(setupMsg[0]);
+    mTimePerQuestion = std::stoi(setupMsg[1]);
 
     for (int i = 0; i < questionsNum; ++i)
         mQuestions.push_back(createQuestion(i));
