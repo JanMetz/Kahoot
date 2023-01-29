@@ -38,6 +38,8 @@ void ConnectScreen::accept(){
         QStringList list = msg.split(";");
         code = list[0].toInt();
         port = list[1].toInt();
+        qDebug() << code;
+        qDebug() << port;
         sock->close();
         if(sock)
             delete sock;
@@ -45,14 +47,16 @@ void ConnectScreen::accept(){
         connect(sock, &QTcpSocket::connected, this, &ConnectScreen::sendQuestions);
         connectToServer();
     });
+    qDebug() << "createGame";
     sock->write(QString("createGame:").toUtf8());
-
 }
 
 void ConnectScreen::sendQuestions(){
-    connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
-    QString msg = "creator:" + QString::number(numberOfQuestions) + ":" + QString::number(time);
+    sock->write(QString("nick:creator").toUtf8());
+    QString msg = QString::number(numberOfQuestions) + ":" + QString::number(time) + ":";
+    qDebug() << "sending info";
     sock->write(msg.toUtf8());
+    connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
 }
 
 void ConnectScreen::reject(){
@@ -111,23 +115,27 @@ void ConnectScreen::connectToServer(){
 
 void ConnectScreen::socketReadable(){
     QByteArray ba =sock->readAll();
-    qDebug() << QString(ba);
-    if (QString(ba) != "sendQuestion:" && QString(ba) != "sendAnswer:" ||
-            QString(ba) != "provideCorrectMsgIndex") {
+    QString msg = QString(ba);
+    qDebug() << msg;
+    if (msg != "sendQuestion:" && msg != "sendAnswer:" &&
+            msg != "provideCorrectMsgIndex") {
          qDebug() << "return";
         return;
     }
-    qDebug() <<"send";
+    qDebug() <<"sending";
     if(i == 0) {
         QString q = QString("question:") + questions[num][i];
+        qDebug() << q;
         sock->write(q.toUtf8());
         i++;
     } else if (i > 0 && i < 5) {
         QString q = QString("answer:") + questions[num][i];
+        qDebug() << q;
         sock->write(q.toUtf8());
         i++;
     } else {
         QString q = QString("correctAnswerIndex:") + questions[num][i];
+        qDebug() << q;
         sock->write(q.toUtf8());
         num++;
         i = 0;

@@ -190,9 +190,10 @@ std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
 {
     char answer[1024];
     int len = 1024;
+    int r;
     if (read(fd, answer, len) == -1)
         log("Error while receiving data.");
-
+	
     auto s = std::string(answer);
 
     auto tokenize = [&](std::vector<std::string>& vec, const std::string& delimiter) {
