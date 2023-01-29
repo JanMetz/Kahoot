@@ -50,8 +50,8 @@ void ConnectScreen::accept(){
 }
 
 void ConnectScreen::sendQuestions(){
-    connect(sock, &QTcpSocket::readyRead, this, [&] {});
-    QString msg = "creator;" + QString::number(numberOfQuestions) + ";" + QString::number(time);
+    connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
+    QString msg = "creator:" + QString::number(numberOfQuestions) + ":" + QString::number(time);
     sock->write(msg.toUtf8());
 }
 
