@@ -176,6 +176,18 @@ void Server::handleResponse(const int& fd)
             }
         }
     }
+
+    auto it = mPolls.begin();
+    for (it; it < mPolls.end(); ++it)
+    {
+        if (it->fd == fd)
+        {
+            shutdown(it->fd, SHUT_RDWR);
+            close(it->fd);
+            break;
+        }
+    }
+    mPolls.erase(it);
 }
 
 void Server::sendMessage(const int fd, const std::string& msgBody)
