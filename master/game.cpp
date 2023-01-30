@@ -141,7 +141,7 @@ void Game::removePlayer(const int fd, const std::string &nick)
 Questions Game::createQuestion(const int questionNum)
 {
     const int hostFd = mPolls.at(1).fd;
-    sendMessage(hostFd, std::string("sendQuestion:") + std::to_string(questionNum));
+    sendMessage(hostFd, std::string("sendQuestion:"));
 
     waitForAnswer(mPolls[1]);
     auto questionMsg = receiveMessage(hostFd, 1);
@@ -150,7 +150,7 @@ Questions Game::createQuestion(const int questionNum)
     std::array<std::string, 4> answers;
     for (int j = 0; j < 4; ++j)
     {
-        sendMessage(hostFd, std::string("sendAnswer:") + std::to_string(j));
+        sendMessage(hostFd, std::string("sendAnswer:"));
 
         waitForAnswer(mPolls[1]);
         auto answerMsg = receiveMessage(hostFd, 1);

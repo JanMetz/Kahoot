@@ -192,7 +192,7 @@ std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
     int len = 1024;
     if (read(fd, answer, len) == -1)
         log("Error while receiving message");
-
+	
     auto s = std::string(answer);
 
     auto tokenize = [&](std::vector<std::string>& vec, const std::string& delimiter) {
