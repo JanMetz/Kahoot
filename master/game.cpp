@@ -100,6 +100,8 @@ bool Game::addPlayer(const pollfd poll)
     {
         sendMessage(clientFd, std::string("rejected:"));
         log(std::string("Player ") + nickMsg[0] + std::string(" rejected"));
+        shutdown(clientFd, SHUT_RDWR);
+        close(clientFd);
         return false;
     }
     else
@@ -250,12 +252,13 @@ void Game::setupGame()
     log("Leaving game setup mode");
 }
 
-void Game::waitForAnswer(const pollfd client)
+void Game::waitForAnswer(pollfd client)
 {
+    log("Waiting for message...");
     while (!(client.revents & POLLIN))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
-        if (poll(mPolls.data(), mPolls.size(), -1) == -1)
+        if (poll(&client, 1, -1) == -1)
         {
             log("Error trying to poll");
             continue;

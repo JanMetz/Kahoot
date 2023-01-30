@@ -237,9 +237,11 @@ void Server::run()
 {
     while(true)
     {
-        int res = poll(mPolls.data(), mPolls.size(), -1);
-        if (res == -1)
-			log("Poll failed\n");
+        if (poll(mPolls.data(), mPolls.size(), -1) == -1)
+        {
+			log("Poll failed");
+            continue;
+        }
 
         for (auto &client : mPolls)
         {

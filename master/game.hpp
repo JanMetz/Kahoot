@@ -31,7 +31,7 @@ private:
     void handleResponse(const int& fd) override;
     void broadcastMessage(const std::string& msgBody);
     bool acceptClient() override;
-    void waitForAnswer(const pollfd client);
+    void waitForAnswer(pollfd client);
     void run() override;
     
     std::chrono::time_point<std::chrono::high_resolution_clock> mBroadcastTimepoint;
