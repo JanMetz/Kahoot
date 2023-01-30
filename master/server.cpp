@@ -227,8 +227,11 @@ std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
 
     if (ret.size() < minSize)
     {
-        log(std::string("Received message: ") + s + std::string(" has invalid size"));
-        return {"1","2","3","4","5","6","7","8"}; // so it will not crash
+        std::string concat = "";
+        for (auto &part : ret)
+            concat += part;
+
+        log(std::string("Received message: ") + concat + std::string(" has invalid size"));
     }
 
     return ret;
