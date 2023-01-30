@@ -201,11 +201,12 @@ void Server::sendMessage(const int fd, const std::string& msgBody)
 std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
 {
     char answer[1024];
+    std::memset(answer, '\0', sizeof(answer));
     int len = 1024;
     if (read(fd, answer, len) == -1)
         log("Error while receiving message");
 	
-    auto s = std::string(answer);
+    auto s = std::string(answer, len);
 
     auto tokenize = [&](std::vector<std::string>& vec, const std::string& delimiter) {
         size_t pos = 0;
