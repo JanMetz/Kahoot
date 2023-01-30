@@ -191,7 +191,7 @@ std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
     char answer[1024];
     int len = 1024;
     if (read(fd, answer, len) == -1)
-        log("Error while receiving data.");
+        log("Error while receiving message");
 
     auto s = std::string(answer);
 
@@ -214,7 +214,7 @@ std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
 
     if (ret.size() < minSize)
     {
-        log("Received message has invalid size");
+        log(std::string("Received message: ") + s + std::string(" has invalid size"));
         return {"1","2","3","4","5","6","7","8"}; // so it will not crash
     }
 
@@ -246,7 +246,7 @@ int Server::generateCode() const
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(1, 10000);
+    std::uniform_int_distribution<> distrib(1000, 9999);
 
     int code = distrib(gen);
     while (mGames.find(code) != mGames.end())
@@ -261,6 +261,6 @@ void Server::log(const std::string &msg)
     time_t now = std::chrono::system_clock::to_time_t(timepoint);
 
     mDebugFile.open("server_d.log", std::ios::app);
-    mDebugFile << ctime(&now) << '\t' << msg << std::endl;
+    mDebugFile << ctime(&now) << '\t' << msg << '\t' << std::to_string(mPort) << std::endl;
     mDebugFile.close();
 }

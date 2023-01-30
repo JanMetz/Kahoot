@@ -17,7 +17,7 @@ Game::Game(const long port) : Server(port), mRun(true), mTrafficClosed(false)
 void Game::runTheGame()
 {
     broadcastMessage(std::string("theGameStarts:"));
-    log(std::string("Game started ") + std::to_string(mPort));
+    log(std::string("Game started"));
     mTrafficClosed = true;
 
     for (const auto question : mQuestions)
@@ -44,7 +44,7 @@ void Game::runTheGame()
     }
 
     broadcastMessage(std::string("theGameEnds:"));
-    log(std::string("Game ended ") + std::to_string(mPort));
+    log(std::string("Game ended"));
     broadcastPunctation();
     mRun = false;
 }
@@ -90,20 +90,22 @@ double Game::calculatePoints(const std::vector<std::string> &msg) const
     return 0.0;
 }
 
-bool Game::addPlayer(const int clientFd)
+bool Game::addPlayer(const pollfd poll)
 {
-    auto nickMsg = receiveMessage(clientFd, 2);
+    waitForAnswer(poll);
+    const int clientFd = poll.fd;
+    auto nickMsg = receiveMessage(clientFd, 1);
 
-    if (mPunctation.find(nickMsg[1]) != mPunctation.end())
+    if (mPunctation.find(nickMsg[0]) != mPunctation.end())
     {
         sendMessage(clientFd, std::string("rejected:"));
-        log(std::string("Player rejected ") + std::to_string(mPort));
+        log(std::string("Player ") + nickMsg[0] + std::string(" rejected"));
         return false;
     }
     else
         sendMessage(clientFd, std::string("accepted:"));
 
-    mPunctation[nickMsg[1]] = 0;
+    mPunctation[nickMsg[0]] = 0;
 
     std::string allNicks = "allNicks:";
     for (auto& nick : mPunctation)
@@ -113,7 +115,7 @@ bool Game::addPlayer(const int clientFd)
 
     sendMessage(clientFd, allNicks);
 
-    log(std::string("Player added ") + std::to_string(mPort));
+    log(std::string("Player ") + nickMsg[0] + std::string(" added"));
     
     return true;
 }
@@ -133,7 +135,7 @@ void Game::removePlayer(const int fd, const std::string &nick)
     mPolls.erase(it);
     mPunctation.erase(mPunctation.find(nick));
 
-    log(std::string("Player ") + nick + std::string("removed ") + std::to_string(mPort));
+    log(std::string("Player ") + nick + std::string(" removed"));
 }
 
 Questions Game::createQuestion(const int questionNum)
@@ -141,28 +143,31 @@ Questions Game::createQuestion(const int questionNum)
     const int hostFd = mPolls.at(1).fd;
     sendMessage(hostFd, std::string("sendQuestion:") + std::to_string(questionNum));
 
-    auto questionMsg = receiveMessage(hostFd, 2);
-    log(std::string("Question ") + std::to_string(questionNum) + ": " + questionMsg[0] + " " + questionMsg[1]);
+    waitForAnswer(mPolls[1]);
+    auto questionMsg = receiveMessage(hostFd, 1);
+    log(std::string("Received question: ") + questionMsg[0]);
 
     std::array<std::string, 4> answers;
     for (int j = 0; j < 4; ++j)
     {
         sendMessage(hostFd, std::string("sendAnswer:") + std::to_string(j));
 
-        auto answerMsg = receiveMessage(hostFd, 2);
-        log(std::string("Answer ") + std::to_string(j) + ": " + answerMsg[0] + " " + answerMsg[1]);
+        waitForAnswer(mPolls[1]);
+        auto answerMsg = receiveMessage(hostFd, 1);
+        log(std::string("Received answer: ") + answerMsg[0]);
 
-        answers[j] = answerMsg[1];
+        answers[j] = answerMsg[0];
     }
 
     sendMessage(hostFd, std::string("provideCorrectMsgIndex"));
 
-    auto indexMsg = receiveMessage(hostFd, 2);
-    log(std::string("Correct answer index: ") + indexMsg[0] + " " + indexMsg[1]);
+    waitForAnswer(mPolls[1]);
+    auto indexMsg = receiveMessage(hostFd, 1);
+    log(std::string("Received correct answer index: ") + indexMsg[0]);
 
-    int index = std::stoi(indexMsg[1]);
+    int index = std::stoi(indexMsg[0]);
 
-    Questions q(questionMsg[1], answers);
+    Questions q(questionMsg[0], answers);
     q.setCorrectAnswerIndex(index);
 
     return q;
@@ -189,7 +194,10 @@ void Game::handleResponse(const int& fd)
 
     if (message[0] == "leaveTheGame")
     {
-        removePlayer(fd, message[1]);
+        if (message.size() != 2)
+            log("Invalid leaveTheGame message received");
+        else
+            removePlayer(fd, message[1]);
     }
 }
 
@@ -207,16 +215,16 @@ bool Game::acceptClient()
     int clientFd = accept(mSock, nullptr, nullptr);
     if (clientFd == -1)
     {
-        log(std::string("Accept failed ") + std::to_string(mPort));
+        log(std::string("Accept failed"));
         return false;
     }
-
-    if (!addPlayer(clientFd))
-        return false;
 
     pollfd poll;
     poll.fd = clientFd;
     poll.events = POLLIN;
+
+    if (!addPlayer(poll))
+        return false;
 
     mPolls.push_back(poll);
 
@@ -228,20 +236,42 @@ bool Game::acceptClient()
 
 void Game::setupGame()
 {
+    log("Entering game setup mode");
+
     const int hostFd = mPolls[1].fd;
+    waitForAnswer(mPolls[1]);
     auto setupMsg = receiveMessage(hostFd, 2);  //format odpowiedzi IloscPytanwQuizie:SekundNaPytanie:
     const int questionsNum = std::stoi(setupMsg[0]);
     mTimePerQuestion = std::stoi(setupMsg[1]);
 
     for (int i = 0; i < questionsNum; ++i)
         mQuestions.push_back(createQuestion(i));
+
+    log("Leaving game setup mode");
+}
+
+void Game::waitForAnswer(const pollfd client)
+{
+    while (!(client.revents & POLLIN))
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+        if (poll(mPolls.data(), mPolls.size(), -1) == -1)
+        {
+            log("Error trying to poll");
+            continue;
+        }
+    }
 }
 
 void Game::run()
 {
     while (mRun)
     {
-        int res = poll(mPolls.data(), mPolls.size(), -1);
+        if (poll(mPolls.data(), mPolls.size(), -1) == -1)
+        {
+            log("Error trying to poll");
+            continue;
+        }
 
         for (auto& client : mPolls)
         {

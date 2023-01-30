@@ -21,7 +21,7 @@ private:
     void extractAnswer(const std::vector<std::string>& msg);
     double calculatePoints(const std::vector<std::string>& msg) const;
 
-    bool addPlayer(const int clientFd);
+    bool addPlayer(const pollfd poll);
     void removePlayer(const int fd, const std::string& nick);
 
     void setupGame();
@@ -31,6 +31,7 @@ private:
     void handleResponse(const int& fd) override;
     void broadcastMessage(const std::string& msgBody);
     bool acceptClient() override;
+    void waitForAnswer(const pollfd client);
     void run() override;
     
     std::chrono::time_point<std::chrono::high_resolution_clock> mBroadcastTimepoint;
