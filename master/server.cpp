@@ -167,7 +167,7 @@ void Server::handleResponse(const int& fd)
                 sendMessage(fd,  std::to_string(code) + std::string(":"));
                 sendMessage(fd, std::to_string(port) + std::string(":"));
 
-                shutdown(fd, SHUT_RDWR);
+                shutdown(fd, SHUT_RD);
                 close(fd);
 
                 auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
