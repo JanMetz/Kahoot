@@ -254,6 +254,8 @@ void Game::setupGame()
 
 void Game::waitForAnswer(pollfd client)
 {
+    client.revents = 0;
+    
     log("Waiting for message...");
     while (!(client.revents & POLLIN))
     {
