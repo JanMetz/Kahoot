@@ -22,6 +22,7 @@
 #include <exception>
 #include <fstream>
 #include <random>
+#include <algorithm>
 
 Server::Server(const long port) : mPort(port), mPolls({})
 {
@@ -87,7 +88,7 @@ bool Server::openConnection()
 
     pollfd poll;
     poll.fd = mSock;
-    poll.events = POLLIN;
+    poll.events = 0;
 
     mPolls.push_back(poll);
 
@@ -118,7 +119,7 @@ bool Server::acceptClient()
 
     pollfd poll;
     poll.fd = clientFd;
-    poll.events = POLLIN;
+    poll.events = 0;
 
     mPolls.push_back(poll);
 
@@ -163,9 +164,18 @@ void Server::handleResponse(const int& fd)
 
                 mGames[code] = port;
 
-                sendMessage(fd,  std::to_string(code) + std::string(";"));
-                sendMessage(fd, std::to_string(port) + std::string(";"));
-                
+                sendMessage(fd,  std::to_string(code) + std::string(":"));
+                sendMessage(fd, std::to_string(port) + std::string(":"));
+
+                shutdown(fd, SHUT_RDWR);
+                close(fd);
+
+                auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
+                if (it != mPolls.end())
+                    mPolls.erase(it);
+                else
+                    log("Error while removing client from polling list");
+
                 success = true;
 
                 log("New game created");
@@ -178,18 +188,6 @@ void Server::handleResponse(const int& fd)
             }
         }
     }
-
-    auto it = mPolls.begin();
-    for (it; it < mPolls.end(); ++it)
-    {
-        if (it->fd == fd)
-        {
-            shutdown(it->fd, SHUT_RDWR);
-            close(it->fd);
-            break;
-        }
-    }
-    mPolls.erase(it);
 }
 
 void Server::sendMessage(const int fd, const std::string& msgBody)
