@@ -132,13 +132,13 @@ void Server::handleResponse(const int& fd)
 {
     auto message = receiveMessage(fd, 1);
     
-    if ((message[0] == "joinGame") && (message.size()) > 1 && (mGames.find(std::stoi(message[1])) != mGames.end()))
+    if ((message.size() > 1) && (message[0] == "joinGame") && (mGames.find(std::stoi(message[1])) != mGames.end()))
     {
         sendMessage(fd, std::string("gamePort:") + std::to_string(mGames[std::stoi(message[1])]));
         log("Join request received");
     }
 
-    if (message[0] == "createGame")
+    if ((message.size() >= 1) && (message[0] == "createGame"))
     {
         bool success = false;
         int port = mPort;
@@ -167,14 +167,7 @@ void Server::handleResponse(const int& fd)
                 sendMessage(fd,  std::to_string(code) + std::string(":"));
                 sendMessage(fd, std::to_string(port) + std::string(":"));
 
-                shutdown(fd, SHUT_RD);
-                close(fd);
-
-                auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
-                if (it != mPolls.end())
-                    mPolls.erase(it);
-                else
-                    log("Error while removing client from polling list");
+                removeClient(fd);
 
                 success = true;
 
@@ -188,6 +181,18 @@ void Server::handleResponse(const int& fd)
             }
         }
     }
+}
+
+void Server::removeClient(const int fd)
+{
+    shutdown(fd, SHUT_RD);
+    close(fd);
+
+    auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
+    if (it != mPolls.end())
+        mPolls.erase(it);
+    else
+        log("Error while removing client from polling list");
 }
 
 void Server::sendMessage(const int fd, const std::string& msgBody)
@@ -256,6 +261,9 @@ void Server::run()
                 else
                     handleResponse(client.fd);
             }
+
+            if (client.revents & POLLHUP)
+                removeClient(client.fd);
         }
     }
 }

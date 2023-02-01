@@ -30,9 +30,9 @@ private:
    
     void handleResponse(const int& fd) override;
     void broadcastMessage(const std::string& msgBody);
+    std::vector<std::string> receiveMessage_correctSizeOnly(const int hostFd, const int size);
     bool acceptClient() override;
     void waitForAnswer(const int clientFd);
-    void run() override;
     
     std::chrono::time_point<std::chrono::high_resolution_clock> mBroadcastTimepoint;
     int mTimePerQuestion;
