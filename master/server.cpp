@@ -64,9 +64,9 @@ bool Server::setupSocket()
     }
 
     const int optval = 1;
-    setsockopt(mSock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval));
+    setsockopt(mSock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     const int bufforSize = 1024;
-    setsockopt(mSock, SOL_SOCKET, SO_RCVBUF, (char*)&bufforSize, sizeof(bufforSize));
+    //setsockopt(mSock, SOL_SOCKET, SO_RCVBUF, &bufforSize, sizeof(bufforSize));
 
     return true;
 }
@@ -167,7 +167,7 @@ void Server::handleResponse(const int& fd)
                 sendMessage(fd,  std::to_string(code) + std::string(":"));
                 sendMessage(fd, std::to_string(port) + std::string(":"));
 
-                shutdown(fd, SHUT_RDWR);
+                shutdown(fd, SHUT_RD);
                 close(fd);
 
                 auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
