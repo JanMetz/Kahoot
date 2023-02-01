@@ -221,7 +221,7 @@ bool Game::acceptClient()
 
     pollfd poll;
     poll.fd = clientFd;
-    poll.events = 0;
+    poll.events = POLLIN;
 
     if (!addPlayer(clientFd))
         return false;
@@ -253,7 +253,7 @@ void Game::setupGame()
 void Game::waitForAnswer(const int fd)
 {
     pollfd client;
-    client.revents = 0;
+    client.events = POLLIN;
     client.fd = fd;
 
     log("Waiting for message...");

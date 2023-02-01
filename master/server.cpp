@@ -88,7 +88,7 @@ bool Server::openConnection()
 
     pollfd poll;
     poll.fd = mSock;
-    poll.events = 0;
+    poll.events = POLLIN;
 
     mPolls.push_back(poll);
 
@@ -119,7 +119,7 @@ bool Server::acceptClient()
 
     pollfd poll;
     poll.fd = clientFd;
-    poll.events = 0;
+    poll.events = POLLIN;
 
     mPolls.push_back(poll);
 
