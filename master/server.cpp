@@ -230,15 +230,6 @@ std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
     std::vector<std::string> ret;
     tokenize(ret, ":");
 
-    if (ret.size() < minSize)
-    {
-        std::string concat = "";
-        for (auto &part : ret)
-            concat += part;
-
-        log(std::string("Received message: ") + concat + std::string(" has invalid size"));
-    }
-
     return ret;
 }
 

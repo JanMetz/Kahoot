@@ -155,7 +155,6 @@ void Game::waitForAnswer(const int fd)
     client.events = POLLIN;
     client.fd = fd;
 
-    log("Waiting for message...");
     while (!(client.revents & POLLIN))
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
@@ -169,6 +168,7 @@ void Game::waitForAnswer(const int fd)
 
 std::vector<std::string> Game::receiveMessage_correctSizeOnly(const int hostFd, const int size)
 {
+    log("Waiting for message...");
     std::vector<std::string> msg;
     do
     {
