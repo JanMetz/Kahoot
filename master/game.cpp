@@ -260,3 +260,50 @@ Questions Game::createQuestion(const int questionNum)
 
     return q;
 }
+
+void Game::removeClient(const int fd)
+{
+    if (fd == mPolls[1].fd)
+    {
+        mRun = false;
+        log("Host disconnected from the game");
+        closeConnection();
+    }
+    else
+    {
+        shutdown(fd, SHUT_RD);
+        close(fd);
+
+        auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
+        if (it != mPolls.end())
+            mPolls.erase(it);
+        else
+            log("Error while removing client from polling list");
+    }
+}
+
+void Game::run()
+{
+    while(mRun)
+    {
+        if (poll(mPolls.data(), mPolls.size(), -1) == -1)
+        {
+			log("Poll failed");
+            continue;
+        }
+
+        for (auto &client : mPolls)
+        {
+            if (client.revents & POLLIN)
+            {
+                if (client.fd == mSock)
+                    bool x = acceptClient();
+                else
+                    handleResponse(client.fd);
+            }
+
+            if (client.revents & POLLHUP)
+                removeClient(client.fd);
+        }
+    }
+}

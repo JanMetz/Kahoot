@@ -34,7 +34,7 @@ protected:
     
     virtual void handleResponse(const int& fd);
     virtual bool acceptClient();
-    void removeClient(const int fd);
+    virtual void removeClient(const int fd);
 
     void sendMessage(const int fd, const std::string& msgBody);
     std::vector<std::string> receiveMessage(const int fd, const int minSize = 1);

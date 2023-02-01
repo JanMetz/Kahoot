@@ -16,6 +16,7 @@ class Game : public Server
 public:
     Game(const long port);
     void runTheGame();
+    void run() override;
 
 private:
     void extractAnswer(const std::vector<std::string>& msg);
@@ -32,6 +33,7 @@ private:
     void broadcastMessage(const std::string& msgBody);
     std::vector<std::string> receiveMessage_correctSizeOnly(const int hostFd, const int size);
     bool acceptClient() override;
+    void removeClient(const int fd) override;
     void waitForAnswer(const int clientFd);
     
     std::chrono::time_point<std::chrono::high_resolution_clock> mBroadcastTimepoint;
