@@ -7,6 +7,10 @@ ConnectScreen::ConnectScreen(QMainWindow* m, int n, int t,
     ui(new Ui::ConnectScreen)
 {
     ui->setupUi(this);
+    ui->progressBar->hide();
+    ui->progressBar->setMinimum(0);
+    ui->progressBar->setMaximum(n*6);
+    ui->progressBar->setValue(0);
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     connect(ui->buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
     mainWindow = m;
@@ -28,35 +32,54 @@ ConnectScreen::ConnectScreen(QMainWindow* m, int n, int t,
         delete sock;
     sock = new QTcpSocket(this);
     connect(sock, &QTcpSocket::connected, this, &ConnectScreen::socketConnected);
-    connectToServer();
+    connectToServer(sock);
 }
 
 void ConnectScreen::accept(){
+    ui->buttonBox->setEnabled(false);
     connect(sock, &QTcpSocket::readyRead, this, [&]{
+        qDebug() << "reading port";
         QByteArray ba = sock->readAll();
         QString msg = QString(ba);
-        QStringList list = msg.split(";");
+        QStringList list = msg.split(":");
         code = list[0].toInt();
         port = list[1].toInt();
-        qDebug() << code;
-        qDebug() << port;
+        qDebug() << "code: " << code;
+        qDebug() << "port: " << port;
+        sock->disconnectFromHost();
         sock->close();
-        if(sock)
-            delete sock;
+        //if(sock)
+        //    delete sock;
         sock = new QTcpSocket(this);
         connect(sock, &QTcpSocket::connected, this, &ConnectScreen::sendQuestions);
-        connectToServer();
+        connectToServer(sock);
     });
     qDebug() << "createGame";
     sock->write(QString("createGame:").toUtf8());
 }
 
 void ConnectScreen::sendQuestions(){
-    sock->write(QString("nick:creator").toUtf8());
-    QString msg = QString::number(numberOfQuestions) + ":" + QString::number(time) + ":";
-    qDebug() << "sending info";
-    sock->write(msg.toUtf8());
-    connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
+    qDebug() << "connected (sendQuestions)";
+    connTimeoutTimer->stop();
+    connTimeoutTimer->deleteLater();
+    connTimeoutTimer=nullptr;
+    qDebug() << "sending nick";
+    sock->write(QString("creator").toUtf8());
+    connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketAccepted);
+    ui->progressBar->show();
+}
+
+void ConnectScreen::socketAccepted(){
+    QString message = QString(sock->readAll());
+    qDebug() << "accepted message: " << message;
+    QStringList list = message.split(":");
+    if (list[0] == "accepted") {
+        disconnect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketAccepted);
+        connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
+        QString msg = QString::number(numberOfQuestions) + ":" + QString::number(time) + ":";
+        qDebug() << "sending: numberOfQuestions, time";
+        sock->write(msg.toUtf8());
+    }
 }
 
 void ConnectScreen::reject(){
@@ -66,22 +89,23 @@ void ConnectScreen::reject(){
     this->close();
 }
 
-ConnectScreen::~ConnectScreen()
-{
+ConnectScreen::~ConnectScreen(){
     delete ui;
 }
 
 void ConnectScreen::socketConnected(){
+    qDebug() << "connected";
     connTimeoutTimer->stop();
     connTimeoutTimer->deleteLater();
     connTimeoutTimer=nullptr;
 }
 
 void ConnectScreen::socketDisconnected(){
-
+    qDebug() << "disconnected";
 }
 
 void ConnectScreen::socketError(QTcpSocket::SocketError err){
+    ui->buttonBox->setEnabled(true);
     if(err == QTcpSocket::RemoteHostClosedError)
         return;
     if(connTimeoutTimer){
@@ -94,55 +118,56 @@ void ConnectScreen::socketError(QTcpSocket::SocketError err){
 }
 
 
-void ConnectScreen::connectToServer(){
-
+void ConnectScreen::connectToServer(QTcpSocket* socket){
+    qDebug() << "connecting";
     connTimeoutTimer = new QTimer(this);
     connTimeoutTimer->setSingleShot(true);
     connect(connTimeoutTimer, &QTimer::timeout, [&]{
-        sock->abort();
-        sock->deleteLater();
-        sock = nullptr;
+        qDebug() << "Connect timed out";
+        socket->abort();
+        socket->deleteLater();
+        socket = nullptr;
         connTimeoutTimer->deleteLater();
         connTimeoutTimer=nullptr;
         QMessageBox::critical(this, "Error", "Connect timed out");
     });
-
-    connect(sock, &QTcpSocket::disconnected, this, &ConnectScreen::socketDisconnected);
-    connect(sock, &QTcpSocket::errorOccurred, this, &ConnectScreen::socketError);    
-    sock->connectToHost(QString(adres), port);
+    connect(socket, &QTcpSocket::disconnected, this, &ConnectScreen::socketDisconnected);
+    connect(socket, &QTcpSocket::errorOccurred, this, &ConnectScreen::socketError);
+    socket->connectToHost(QString(adres), port);
     connTimeoutTimer->start(3000);
 }
 
 void ConnectScreen::socketReadable(){
     QByteArray ba =sock->readAll();
     QString msg = QString(ba);
-    qDebug() << msg;
+    qDebug() << "received message: " << msg;
     if (msg != "sendQuestion:" && msg != "sendAnswer:" &&
             msg != "provideCorrectMsgIndex") {
-         qDebug() << "return";
+        qDebug() << "return " << msg;
         return;
     }
     qDebug() <<"sending";
     if(i == 0) {
-        QString q = QString("question:") + questions[num][i];
+        QString q = questions[num][i];
         qDebug() << q;
         sock->write(q.toUtf8());
         i++;
     } else if (i > 0 && i < 5) {
-        QString q = QString("answer:") + questions[num][i];
+        QString q = questions[num][i];
         qDebug() << q;
         sock->write(q.toUtf8());
         i++;
     } else {
-        QString q = QString("correctAnswerIndex:") + questions[num][i];
+        QString q =  questions[num][i];
         qDebug() << q;
         sock->write(q.toUtf8());
         num++;
         i = 0;
-        if (num > numberOfQuestions) {
+        if (num >= numberOfQuestions) {
             QWidget *wdg = new StartQuiz(mainWindow, sock, code);
             wdg->show();
             this->close();
         }
     }
+    ui->progressBar->setValue(ui->progressBar->value() + 1);
 }

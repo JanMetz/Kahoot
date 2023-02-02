@@ -26,11 +26,21 @@
     <enum>Qt::Vertical</enum>
    </property>
    <widget class="QLabel" name="label">
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
+    </property>
     <property name="text">
      <string>Code</string>
     </property>
    </widget>
    <widget class="QLabel" name="YourCode">
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
+    </property>
     <property name="text">
      <string>Your code</string>
     </property>
