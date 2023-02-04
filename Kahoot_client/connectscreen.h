@@ -41,9 +41,10 @@ private:
     void socketConnected();
     void socketDisconnected();
     void socketError(QTcpSocket::SocketError);
-    void connectToServer();
+    void connectToServer(QTcpSocket* socket);
     void sendQuestions();
     void socketReadable();
+    void socketAccepted();
 };
 
 #endif // CONNECTSCREEN_H

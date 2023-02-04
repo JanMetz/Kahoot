@@ -19,7 +19,8 @@ StartQuiz::StartQuiz(QMainWindow* m, QTcpSocket* s, int c, QWidget *parent) :
         this->close();
     });
     connect(ui->cancelButton, &QPushButton::clicked, this, [&]{
-        if(sock) sock->close();;
+        if(sock)
+            sock->close();
         mainWindow->show();
         this->close();
     });    
