@@ -132,10 +132,13 @@ void Server::handleResponse(const int& fd)
 {
     auto message = receiveMessage(fd, 1);
     
-    if ((message.size() > 1) && (message[0] == "joinGame") && (mGames.find(std::stoi(message[1])) != mGames.end()))
+    if ((message.size() > 1) && (message[0] == "joinGame"))
     {
-        sendMessage(fd, std::string("gamePort:") + std::to_string(mGames[std::stoi(message[1])]));
         log("Join request received");
+        if (mGames.find(std::stoi(message[1])) != mGames.end())
+            sendMessage(fd, std::string("gamePort:") + std::to_string(mGames[std::stoi(message[1])]));
+        else
+            sendMessage(fd, std::string("invalidCode:"));   
     }
 
     if ((message.size() >= 1) && (message[0] == "createGame"))
