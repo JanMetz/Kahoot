@@ -195,17 +195,22 @@ bool Game::addPlayer(const int clientFd)
         sendMessage(clientFd, std::string("accepted:"));
 
     mPunctation[nickMsg[0]] = 0;
+    sendAllNicks();
+    
+    log(std::string("Player ") + nickMsg[0] + std::string(" added"));
+    
+    return true;
+}
 
+void Game::sendAllNicks()
+{
     std::string allNicks = "allNicks:";
     for (auto& nick : mPunctation)
     {
         allNicks += nick.first + ":";
     }
 
-    sendMessage(clientFd, allNicks);
-    log(std::string("Player ") + nickMsg[0] + std::string(" added"));
-    
-    return true;
+    broadcastMessage(allNicks);
 }
 
 void Game::removePlayer(const int fd, const std::string &nick)
@@ -213,6 +218,8 @@ void Game::removePlayer(const int fd, const std::string &nick)
     removeClient(fd);
 
     mPunctation.erase(mPunctation.find(nick));
+    sendAllNicks();
+
     log(std::string("Player ") + nick + std::string(" removed"));
 }
 

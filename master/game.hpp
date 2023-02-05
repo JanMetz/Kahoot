@@ -24,6 +24,7 @@ private:
 
     bool addPlayer(const int clientFd);
     void removePlayer(const int fd, const std::string& nick);
+    void sendAllNicks();
 
     void setupGame();
     Questions createQuestion(const int questionNum);
