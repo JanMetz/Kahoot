@@ -13,10 +13,12 @@
 #include <array>
 
 
-Game::Game(const long port) : Server(port), mRun(true), mTrafficClosed(false)
+Game::Game(const long port) : Server(port), mTrafficClosed(false)
 {
     if (!establishConnection())
         mRun = false;
+    else
+        mRun = true;
 }
 
 void Game::runTheGame()
@@ -97,7 +99,7 @@ void Game::handleResponse(const int& fd)
     if (!receiveMessage(fd, 1, message))
         return;
 
-    if (((message[0] == "joinGame") || (message[0] == "createGame")))
+    if ((message[0] == "joinGame") || (message[0] == "createGame"))
     {
         log("Received invalid request");
     }

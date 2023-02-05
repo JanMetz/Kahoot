@@ -65,8 +65,8 @@ bool Server::setupSocket()
 
     const int optval = 1;
     setsockopt(mSock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-    const int bufforSize = 1024;
-    //setsockopt(mSock, SOL_SOCKET, SO_RCVBUF, &bufforSize, sizeof(bufforSize));
+    /*const int bufforSize = 1024;
+    setsockopt(mSock, SOL_SOCKET, SO_RCVBUF, &bufforSize, sizeof(bufforSize));*/
 
     return true;
 }
@@ -208,7 +208,7 @@ void Server::sendMessage(const int fd, const std::string& msgBody)
         log("Error while sending data.");
 }
 
-bool Server::receiveMessage(const int fd, const int minSize, std::vector<std::string> &vec)
+bool Server::receiveMessage(const int fd, const size_t minSize, std::vector<std::string> &vec)
 {
     char answer[1024];
     std::memset(answer, '\0', sizeof(answer));

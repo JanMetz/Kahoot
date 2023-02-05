@@ -19,7 +19,7 @@ class Server
 {
 public:
     Server(const long port);
-    ~Server();
+    virtual ~Server();
 
 	bool isUp();
     
@@ -37,7 +37,7 @@ protected:
     virtual void removeClient(const int fd);
 
     void sendMessage(const int fd, const std::string& msgBody);
-    bool receiveMessage(const int fd, const int minSize,  std::vector<std::string> &vec);
+    bool receiveMessage(const int fd, const size_t minSize,  std::vector<std::string> &vec);
 
     int generateCode() const;
 
