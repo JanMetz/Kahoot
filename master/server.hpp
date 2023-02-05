@@ -37,7 +37,7 @@ protected:
     virtual void removeClient(const int fd);
 
     void sendMessage(const int fd, const std::string& msgBody);
-    std::vector<std::string> receiveMessage(const int fd, const int minSize = 1);
+    bool receiveMessage(const int fd, const int minSize,  std::vector<std::string> &vec);
 
     int generateCode() const;
 

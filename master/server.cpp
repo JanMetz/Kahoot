@@ -130,7 +130,9 @@ bool Server::acceptClient()
 
 void Server::handleResponse(const int& fd)
 {
-    auto message = receiveMessage(fd, 1);
+    std::vector<std::string> message;
+    if (!receiveMessage(fd, 1, message))
+        return;
     
     if ((message.size() > 1) && (message[0] == "joinGame"))
     {
@@ -206,13 +208,16 @@ void Server::sendMessage(const int fd, const std::string& msgBody)
         log("Error while sending data.");
 }
 
-std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
+bool Server::receiveMessage(const int fd, const int minSize, std::vector<std::string> &vec)
 {
     char answer[1024];
     std::memset(answer, '\0', sizeof(answer));
     int len = 1024;
     if ((len = read(fd, answer, len)) == -1)
+    {
         log("Error while receiving message");
+        return false;
+    }
 	
     auto s = std::string(answer, len);
 
@@ -233,7 +238,11 @@ std::vector<std::string> Server::receiveMessage(const int fd, const int minSize)
     std::vector<std::string> ret;
     tokenize(ret, ":");
 
-    return ret;
+    if (ret.size() < minSize)
+        return false;
+
+    vec.insert(vec.end(), ret.begin(), ret.end());
+    return true;
 }
 
 void Server::run()

@@ -93,9 +93,11 @@ double Game::calculatePoints(const std::vector<std::string> &msg) const
 
 void Game::handleResponse(const int& fd)
 {   
-    auto message = receiveMessage(fd, 1);
+    std::vector<std::string> message;
+    if (!receiveMessage(fd, 1, message))
+        return;
 
-    if ((message.size() > 0) && ((message[0] == "joinGame") || (message[0] == "createGame")))
+    if (((message[0] == "joinGame") || (message[0] == "createGame")))
     {
         ;//ignore
     }
@@ -105,7 +107,7 @@ void Game::handleResponse(const int& fd)
         extractAnswer(message);
     }
 
-    if ((message.size() > 0) && (message[0] == "startTheGame") && (fd == mPolls[1].fd))
+    if ((message[0] == "startTheGame") && (fd == mPolls[1].fd))
     {
         std::thread th(&Game::runTheGame, this);
     }
@@ -166,18 +168,17 @@ void Game::waitForAnswer(const int fd)
     }
 }
 
-std::vector<std::string> Game::receiveMessage_correctSizeOnly(const int hostFd, const int size)
+std::vector<std::string> Game::receiveMessage_correctSizeOnly(const int fd, const int size)
 {
     log("Waiting for message...");
-    std::vector<std::string> msg;
+    std::vector<std::string> message;
     do
     {
-        waitForAnswer(hostFd);
-        msg = receiveMessage(hostFd, size);
+        waitForAnswer(fd);
     }
-    while(msg.size() < size);
+    while(!receiveMessage(fd, size, message));
 
-    return msg;
+    return message;
 }
 
 bool Game::addPlayer(const int clientFd)
