@@ -1,18 +1,22 @@
 #include "game.hpp"
 
-#include <vector>
-#include <map>
-#include <array>
 #include <poll.h>
+#include <cmath>
 
 #include <chrono>
-#include <string>
 #include <thread>
 #include <algorithm>
 
+#include <string>
+#include <vector>
+#include <map>
+#include <array>
+
+
 Game::Game(const long port) : Server(port), mRun(true), mTrafficClosed(false)
 {
-    bool unused = establishConnection();
+    if (!establishConnection())
+        mRun = false;
 }
 
 void Game::runTheGame()
@@ -36,7 +40,7 @@ void Game::runTheGame()
         broadcastMessage(answers);
 
         mCurrentCorrectAnswer = question.getCorrectAnswer();
-        mBroadcastTimepoint = std::chrono::high_resolution_clock::now();
+        mBroadcastTimepoint = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         
         while (!mGotAllAnswers)
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -54,9 +58,7 @@ void Game::broadcastPunctation()
 {
     std::string msg = "punctation:";
     for (auto& punct : mPunctation)
-    {
         msg = msg + punct.first + ":" + std::to_string(punct.second) + ":";
-    }
 
     broadcastMessage(msg);
 }
@@ -65,10 +67,10 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
 {
     using namespace std::chrono;
 
-    const int twoThirds = static_cast<int>(static_cast<double>(2 * mPunctation.size()) / 3);
-    int elapsed = high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint.time_since_epoch().count();
+    const int twoThirds = std::ceil(static_cast<double>(2 * mPunctation.size()) / 3);
+    int elapsed = high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint;
 
-    if (elapsed < mTimePerQuestion && mAnswersNum < twoThirds)
+    if ((elapsed < mTimePerQuestion) && (mAnswersNum < twoThirds))
     {
         mPunctation[msg[1]] += calculatePoints(msg);
         mAnswersNum++;
@@ -79,11 +81,9 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
 
 double Game::calculatePoints(const std::vector<std::string> &msg) const
 {
-    using namespace std::chrono;
-
-    if (mCurrentCorrectAnswer == msg[0])
+    if (mCurrentCorrectAnswer == msg[0]) //format odpowiedzi OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
     {
-        long dur = std::stol(msg[2]) - mBroadcastTimepoint.time_since_epoch().count();
+        int dur = std::stol(msg[2]) - mBroadcastTimepoint;
 
         return (dur / mTimePerQuestion) * 1000;
     }
@@ -99,7 +99,7 @@ void Game::handleResponse(const int& fd)
 
     if (((message[0] == "joinGame") || (message[0] == "createGame")))
     {
-        ;//ignore
+        log("Received invalid request");
     }
 
     if ((message.size() > 2) && (message[0] == "answer"))
@@ -112,9 +112,9 @@ void Game::handleResponse(const int& fd)
         std::thread th(&Game::runTheGame, this);
     }
 
-    if ((message.size() > 1) && (message[0] == "leaveTheGame"))
+    if (message[0] == "leaveTheGame")
     {
-        removePlayer(fd, message[1]);
+        removeClient(fd);
     }
 }
 
@@ -139,44 +139,36 @@ bool Game::acceptClient()
     pollfd poll;
     poll.fd = clientFd;
     poll.events = POLLIN;
-
-    if (!addPlayer(clientFd))
-        return false;
-
     mPolls.push_back(poll);
 
+    if (!addPlayer(clientFd))
+    {  
+        removeClient(clientFd);
+        return false;
+    }
+   
     if (mPolls.size() == 2)
         setupGame();
 
     return true;
 }
 
-void Game::waitForAnswer(const int fd)
+std::vector<std::string> Game::receiveMessage_correctSizeOnly(const int fd, const int size)
 {
+    log("Waiting for message...");
+
     pollfd client;
     client.events = POLLIN;
     client.fd = fd;
 
-    while (!(client.revents & POLLIN))
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(150));
-        if (poll(&client, 1, -1) == -1)
-        {
-            log("Error trying to poll");
-            continue;
-        }
-    }
-}
-
-std::vector<std::string> Game::receiveMessage_correctSizeOnly(const int fd, const int size)
-{
-    log("Waiting for message...");
     std::vector<std::string> message;
     do
     {
-        waitForAnswer(fd);
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+        if (poll(&client, 1, -1) == -1)
+            log("Error trying to poll");
     }
-    while(!receiveMessage(fd, size, message));
+    while((!(client.revents & POLLIN)) || (!receiveMessage(fd, size, message)));
 
     return message;
 }
@@ -188,17 +180,17 @@ bool Game::addPlayer(const int clientFd)
     {
         sendMessage(clientFd, std::string("rejected:"));
         log(std::string("Player ") + nickMsg[0] + std::string(" rejected"));
-        shutdown(clientFd, SHUT_RDWR);
-        close(clientFd);
+
         return false;
     }
-    else
-        sendMessage(clientFd, std::string("accepted:"));
-
+        
     mPunctation[nickMsg[0]] = 0;
-    sendAllNicks();
+    mNicks[clientFd] = nickMsg[0];
+
+    sendMessage(clientFd, std::string("accepted:"));
+    log(std::string("Player ") + nickMsg[0] + std::string(" accepted"));
     
-    log(std::string("Player ") + nickMsg[0] + std::string(" added"));
+    sendAllNicks();
     
     return true;
 }
@@ -206,44 +198,35 @@ bool Game::addPlayer(const int clientFd)
 void Game::sendAllNicks()
 {
     std::string allNicks = "allNicks:";
-    for (auto& nick : mPunctation)
+    for (auto& nick : mNicks)
     {
-        allNicks += nick.first + ":";
+        allNicks += nick.second + ":";
     }
 
     broadcastMessage(allNicks);
-}
-
-void Game::removePlayer(const int fd, const std::string &nick)
-{
-    removeClient(fd);
-
-    mPunctation.erase(mPunctation.find(nick));
-    sendAllNicks();
-
-    log(std::string("Player ") + nick + std::string(" removed"));
 }
 
 void Game::setupGame()
 {
     log("Entering game setup mode");
 
-    const int hostFd = mPolls[1].fd;
+    const int hostFd = mPolls.at(1).fd;
     auto setupMsg = receiveMessage_correctSizeOnly(hostFd, 2);
 
     const int questionsNum = std::stoi(setupMsg[0]);
     mTimePerQuestion = std::stoi(setupMsg[1]);
 
     for (int i = 0; i < questionsNum; ++i)
-        mQuestions.push_back(createQuestion(i));
+        mQuestions.push_back(createQuestion());
 
     log("Leaving game setup mode");
 }
 
-Questions Game::createQuestion(const int questionNum)
+Questions Game::createQuestion()
 {
     const int hostFd = mPolls.at(1).fd;
     sendMessage(hostFd, std::string("sendQuestion:"));
+
     auto questionMsg = receiveMessage_correctSizeOnly(hostFd, 1);
     log(std::string("Received question: ") + questionMsg[0]);
 
@@ -275,6 +258,7 @@ void Game::removeClient(const int fd)
     {
         mRun = false;
         log("Host disconnected from the game");
+        broadcastMessage(std::string("Error! Terminating game"));
         closeConnection();
     }
     else
@@ -286,7 +270,17 @@ void Game::removeClient(const int fd)
         if (it != mPolls.end())
             mPolls.erase(it);
         else
-            log("Error while removing client from polling list");
+            log("Error while removing client from the polling list");
+
+        auto it2 = mNicks.find(fd);
+        if (it2 != mNicks.end())
+        {
+            mNicks.erase(it2);
+            mPunctation.erase(mPunctation.find(it2->second));
+        }
+
+        sendAllNicks();
+        log("Client disconnected");
     }
 }
 

@@ -23,11 +23,10 @@ private:
     double calculatePoints(const std::vector<std::string>& msg) const;
 
     bool addPlayer(const int clientFd);
-    void removePlayer(const int fd, const std::string& nick);
     void sendAllNicks();
 
     void setupGame();
-    Questions createQuestion(const int questionNum);
+    Questions createQuestion();
     void broadcastPunctation();
    
     void handleResponse(const int& fd) override;
@@ -35,13 +34,13 @@ private:
     std::vector<std::string> receiveMessage_correctSizeOnly(const int hostFd, const int size);
     bool acceptClient() override;
     void removeClient(const int fd) override;
-    void waitForAnswer(const int clientFd);
     
-    std::chrono::time_point<std::chrono::high_resolution_clock> mBroadcastTimepoint;
+    unsigned long mBroadcastTimepoint;
     int mTimePerQuestion;
 
     std::vector<Questions> mQuestions;
     std::map<std::string, double> mPunctation;
+    std::map<int, std::string> mNicks;
 
     bool mTrafficClosed;
     bool mGotAllAnswers;
