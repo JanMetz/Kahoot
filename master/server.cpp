@@ -92,7 +92,7 @@ bool Server::openConnection()
 
     mPolls.push_back(poll);
 
-     log("Connection opened");
+    log("Connection opened");
 
     return true;
 }
@@ -212,6 +212,8 @@ void Server::removeClient(const int fd)
     {
         shutdown(fd, SHUT_RD);
         close(fd);
+
+        log("Clients' connection closed");
     }
     else
         log("Error while shutting down connection: clients' file descriptor is invalid");
@@ -219,7 +221,10 @@ void Server::removeClient(const int fd)
 
     auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
     if (it != mPolls.end())
+    {
         mPolls.erase(it);
+        log("Client removed from polling list");
+    }
     else
         log("Error while removing client from polling list");
 }
