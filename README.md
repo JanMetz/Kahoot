@@ -28,11 +28,12 @@ Po wyczerpaniu się listy pytań wyświetlany jest zwycięzca.
 ## Serwer - instalacja (Linux)
 ```
 g++ -std=c++17 -o server.exe main.cpp server.cpp game.cpp questions.cpp -lpthread
+./server.exe
 ```
 
 ## Klient - instalacja (Linux)
 ```
-cmake -DCMAKE_PREFIX_PATH=~/YOUR_PATH/Qt/gcc_64/ -S Kahoot_client -B build
+cmake -DCMAKE_PREFIX_PATH=YOUR_PATH/Qt/gcc_64/ -S Kahoot_client -B build
 cd build
 make
 ./Kahoot_client
