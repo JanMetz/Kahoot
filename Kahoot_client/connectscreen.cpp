@@ -59,10 +59,7 @@ void ConnectScreen::accept(){
 }
 
 void ConnectScreen::sendQuestions(){
-    qDebug() << "connected (sendQuestions)";
-    connTimeoutTimer->stop();
-    connTimeoutTimer->deleteLater();
-    connTimeoutTimer=nullptr;
+    socketConnected();
     qDebug() << "sending nick";
     sock->write(QString("creator").toUtf8());
     connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketAccepted);

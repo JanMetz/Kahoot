@@ -15,7 +15,7 @@ class Lobby : public QWidget
     Q_OBJECT
 
 public:
-    explicit Lobby(QMainWindow* m, QTcpSocket* s ,QWidget *parent = nullptr);
+    explicit Lobby(QMainWindow* m, QTcpSocket* s, QString name, QStringList nicks, QWidget *parent = nullptr);
     ~Lobby();
 
 private:

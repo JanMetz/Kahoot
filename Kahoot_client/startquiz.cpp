@@ -48,7 +48,8 @@ void StartQuiz::removePlayer(QString player){
 }
 
 void StartQuiz::socketDisconnected(){
-
+    mainWindow->show();
+    this->close();
 }
 
 

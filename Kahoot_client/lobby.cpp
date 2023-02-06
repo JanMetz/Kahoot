@@ -1,7 +1,7 @@
 #include "lobby.h"
 #include "ui_lobby.h"
 
-Lobby::Lobby(QMainWindow* m, QTcpSocket* s, QWidget *parent) :
+Lobby::Lobby(QMainWindow* m, QTcpSocket* s, QString name, QStringList nicks, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Lobby)
 {
@@ -9,6 +9,10 @@ Lobby::Lobby(QMainWindow* m, QTcpSocket* s, QWidget *parent) :
     mainWindow = m;
     sock = s;
     closeSocket = true;
+    ui->label->setText(name);
+    for(int i = 3; i < nicks.length(); i++) {
+        addPlayer(nicks[i]);
+    }
     connect(sock, &QTcpSocket::disconnected, this, &Lobby::socketDisconnected);
     connect(sock, &QTcpSocket::readyRead, this, &Lobby::socketReadable);
     connect(ui->exitButton, &QPushButton::clicked, this, [&]{
@@ -30,7 +34,7 @@ void Lobby::socketDisconnected(){
 void Lobby::socketReadable(){
     QByteArray ba = sock->readAll();
     QString msg = QString(ba);
-    if(msg == "startTheGame") {
+    if(msg == "theGameStarts:") {
         closeSocket = false;
         QWidget *wdg = new QuestionScreen(mainWindow, sock);
         wdg->show();

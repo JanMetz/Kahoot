@@ -25,7 +25,7 @@ public:
 public slots:
     void accept();
     void reject();
-    void acceptName();
+    //void acceptName();
 private:
     Ui::joinQuiz *ui;
     QMainWindow* mainWindow;
@@ -35,6 +35,7 @@ protected:
     QTimer * connTimeoutTimer{nullptr};
     QString adres;
     int port;
+    int port0;
     void connectToServer();
     void socketConnected();
     void socketDisconnected();
