@@ -172,8 +172,6 @@ void Server::handleResponse(const int& fd)
                 sendMessage(fd,  std::to_string(code) + std::string(":"));
                 sendMessage(fd, std::to_string(port) + std::string(":"));
 
-                removeClient(fd);
-
                 success = true;
 
                 log("New game created");
@@ -190,8 +188,14 @@ void Server::handleResponse(const int& fd)
 
 void Server::removeClient(const int fd)
 {
-    shutdown(fd, SHUT_RD);
-    close(fd);
+    if (fcntl(fd, F_GETFD) != -1)
+    {
+        shutdown(fd, SHUT_RD);
+        close(fd);
+    }
+    else
+        log("Error while shutting down connection: clients' file descriptor is invalid");
+
 
     auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
     if (it != mPolls.end())
