@@ -35,8 +35,8 @@ Server::~Server()
 {
     closeConnection();
     for (auto &game : mCreatedGames)
-        if (game)
-            delete game;
+        if (game.mPtr)
+            delete game.mPtr;
 }
 
 bool Server::isUp()
@@ -137,13 +137,14 @@ void Server::handleResponse(const int& fd)
     if ((message.size() > 1) && (message[0] == "joinGame"))
     {
         log("Join request received");
-        if (mGames.find(std::stoi(message[1])) != mGames.end())
-            sendMessage(fd, std::string("gamePort:") + std::to_string(mGames[std::stoi(message[1])]));
+        auto it = findGame(std::stoi(message[1]));
+        if ((it != mCreatedGames.end()) && (it->mPtr->isUp()))
+            sendMessage(fd, std::string("gamePort:") + std::to_string(it->mPort));
         else
-            sendMessage(fd, std::string("invalidCode:"));   
+            sendMessage(fd, std::string("invalidCode:"));  
     }
 
-    if ((message.size() >= 1) && (message[0] == "createGame"))
+    if (message[0] == "createGame")
     {
         bool success = false;
         int port = mPort;
@@ -156,7 +157,7 @@ void Server::handleResponse(const int& fd)
 
             try
             {
-                game = new Game(port);
+                game = new Game(port, mPort);
                 if (!game->isUp())
                 {
 					delete game;
@@ -167,15 +168,14 @@ void Server::handleResponse(const int& fd)
                 std::thread th(&Server::run, game);
                 th.detach();
 
-                mGames[code] = port;
-
                 sendMessage(fd,  std::to_string(code) + std::string(":"));
                 sendMessage(fd, std::to_string(port) + std::string(":"));
 
                 success = true;
 
                 log("New game created");
-                mCreatedGames.push_back(game);
+                GamePointer gamePtr(code, port, game);
+                mCreatedGames.push_back(gamePtr);
             }
             catch (...)
             {
@@ -184,6 +184,26 @@ void Server::handleResponse(const int& fd)
             }
         }
     }
+
+    if ((message.size() > 1) && (message[0] == "deleteGame"))
+    {
+        const int code = std::stoi(message[1]); 
+        auto it = findGame(code);
+        if (it != mCreatedGames.end())
+        {
+            delete it->mPtr;
+            mCreatedGames.erase(it);
+
+            log("Game deleted");
+        }
+        else
+            log("Error: cannot delete game! Invalid port number provided.");
+    }
+}
+
+std::vector<GamePointer>::const_iterator Server::findGame(const int code) const
+{
+    return std::find_if(mCreatedGames.cbegin(), mCreatedGames.cend(), [&](const GamePointer &ptr){return ptr.mCode == code;});
 }
 
 void Server::removeClient(const int fd)
@@ -210,6 +230,8 @@ void Server::sendMessage(const int fd, const std::string& msgBody)
     strcpy(char_array, msgBody.data());
     if (write(fd, char_array, strlen(char_array)) == -1)
         log("Error while sending data.");
+    
+    delete []char_array;
 }
 
 bool Server::receiveMessage(const int fd, const size_t minSize, std::vector<std::string> &vec)
@@ -282,7 +304,7 @@ int Server::generateCode() const
     std::uniform_int_distribution<> distrib(1000, 9999);
 
     int code = distrib(gen);
-    while (mGames.find(code) != mGames.end())
+    while(findGame(code) != mCreatedGames.end())
         code = distrib(gen);
 
     return code;

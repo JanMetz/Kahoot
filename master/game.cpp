@@ -2,6 +2,7 @@
 
 #include <poll.h>
 #include <cmath>
+#include <cstring>
 
 #include <chrono>
 #include <thread>
@@ -13,12 +14,51 @@
 #include <array>
 
 
-Game::Game(const long port) : Server(port), mTrafficClosed(false)
+Game::Game(const long port, const long motherPort) : Server(port), mTrafficClosed(false), mMotherPort(motherPort)
 {
     if (!establishConnection())
         mRun = false;
     else
         mRun = true;
+}
+
+Game::~Game()
+{
+    notifyOwnerAboutClosing();
+}
+
+void Game::notifyOwnerAboutClosing()
+{
+    sockaddr_in addrStruct;
+    addrStruct.sin_family = AF_INET;
+    addrStruct.sin_addr.s_addr = htonl(inet_addr("127.0.0.1"));
+    addrStruct.sin_port = htons((uint16_t)mMotherPort);
+
+    int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(sock == -1)
+    {
+        log("Socket to mother failed");
+        return;
+    }
+
+    if(connect(sock, (sockaddr*) &addrStruct, sizeof(addrStruct)))
+    {
+        log("Connect to mother failed");
+        return;
+    }
+
+    std::string msgBody("deleteGame:");
+    msgBody = msgBody + std::to_string(mPort);
+
+    char* char_array = new char[msgBody.length() + 1];
+    strcpy(char_array, msgBody.data());
+    if (write(sock, char_array, strlen(char_array)) == -1)
+        log("Error while sending data.");
+
+    delete char_array;
+
+    shutdown(sock, SHUT_RDWR);
+    close(sock);
 }
 
 void Game::runTheGame()

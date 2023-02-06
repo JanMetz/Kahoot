@@ -15,6 +15,8 @@
 #include <map>
 #include <fstream>
 
+class GamePointer;
+
 class Server
 {
 public:
@@ -45,13 +47,22 @@ protected:
     unsigned long mPort;
     sockaddr_in mAddrStruct;
     std::vector<struct pollfd> mPolls;
-
-    std::map<int, int> mGames; //mGames[code] = port;
-
     std::ofstream mDebugFile;
 
 private:
-    std::vector<Server*> mCreatedGames;
+    std::vector<GamePointer>::const_iterator findGame(const int code) const;
+
+    std::vector<GamePointer> mCreatedGames;
+};
+
+class GamePointer
+{
+public:
+    GamePointer(const int code, const int port, Server* ptr): mCode(code), mPort(port), mPtr(ptr) {};
+    int mCode;
+    int mPort;
+
+    Server *mPtr;
 };
 
 #endif

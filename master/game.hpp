@@ -14,7 +14,9 @@
 class Game : public Server
 {
 public:
-    Game(const long port);
+    Game(const long port, const long motherPort);
+    ~Game();
+
     void runTheGame();
     void run() override;
 
@@ -34,6 +36,7 @@ private:
     std::vector<std::string> receiveMessage_correctSizeOnly(const int hostFd, const int size);
     bool acceptClient() override;
     void removeClient(const int fd) override;
+    void notifyOwnerAboutClosing();
     
     unsigned long mBroadcastTimepoint;
     int mTimePerQuestion;
@@ -46,6 +49,7 @@ private:
     bool mGotAllAnswers;
     bool mRun;
     int mAnswersNum;
+    long mMotherPort;
     std::string mCurrentCorrectAnswer;
 };
 
