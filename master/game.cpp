@@ -161,8 +161,8 @@ void Game::handleResponse(const int& fd)
 
 void Game::broadcastMessage(const std::string& msgBody)
 {
-    for (auto &client : mPolls)
-        sendMessage(client.fd, msgBody);
+    for (auto &client : mNicks)
+        sendMessage(client.first, msgBody);
 }
 
 bool Game::acceptClient()
