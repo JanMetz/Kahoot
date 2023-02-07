@@ -139,7 +139,7 @@ void Server::handleResponse(const int& fd)
         log("Join request received");
         auto it = findGame(std::stoi(message[1]));
         if ((it != mCreatedGames.end()) && (it->mPtr->isUp()))
-            sendMessage(fd, std::string("gamePort:") + std::to_string(it->mPort));
+            sendMessage(fd, std::string("gamePort:") + std::to_string(it->mPort) + std::string(":"));
         else
             sendMessage(fd, std::string("invalidCode:"));  
     }

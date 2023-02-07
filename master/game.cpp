@@ -73,7 +73,7 @@ void Game::runTheGame()
         mGotAllAnswers = false;
         mCurrentCorrectAnswer = "";
 
-        broadcastMessage(std::string("question:") + question.getQuestionBody());
+        broadcastMessage(std::string("question:") + question.getQuestionBody() + std::to_string(":"));
 
         std::string answers = "answer:";
         for (auto& answer : question.getAnswers())
@@ -282,7 +282,7 @@ Questions Game::createQuestion()
         answers[j] = answerMsg[0];
     }
 
-    sendMessage(hostFd, std::string("provideCorrectMsgIndex"));
+    sendMessage(hostFd, std::string("provideCorrectMsgIndex:"));
     auto indexMsg = receiveMessage_correctSizeOnly(hostFd, 1);
     log(std::string("Received correct answer index: ") + indexMsg[0]);
 
@@ -300,7 +300,7 @@ void Game::removeClient(const int fd)
     {
         mRun = false;
         log("Host disconnected from the game");
-        broadcastMessage(std::string("Error! Terminating game"));
+        broadcastMessage(std::string("Error! Terminating game:"));
         closeConnection();
     }
     else
