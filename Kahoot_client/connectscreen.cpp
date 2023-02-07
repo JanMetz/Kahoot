@@ -38,6 +38,7 @@ ConnectScreen::ConnectScreen(QMainWindow* m, int n, int t,
 void ConnectScreen::accept(){
     ui->buttonBox->setEnabled(false);
     connect(sock, &QTcpSocket::readyRead, this, [&]{
+        if(sock->bytesAvailable()<10) return;
         qDebug() << "reading port";
         QByteArray ba = sock->readAll();
         QString msg = QString(ba);
@@ -74,7 +75,7 @@ void ConnectScreen::socketAccepted(){
         disconnect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketAccepted);
         connect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
         QString msg = QString::number(numberOfQuestions) + ":" + QString::number(time) + ":";
-        qDebug() << "sending: numberOfQuestions, time";
+        qDebug() << "sending: numberOfQuestions " << numberOfQuestions << " time " << time;
         sock->write(msg.toUtf8());
     }
 }
