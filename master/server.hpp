@@ -2,6 +2,8 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
+#include "auxilaries.hpp"
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -53,16 +55,6 @@ private:
     std::vector<GamePointer>::const_iterator findGame(const int code) const;
 
     std::vector<GamePointer> mCreatedGames;
-};
-
-class GamePointer
-{
-public:
-    GamePointer(const int code, const int port, Server* ptr): mCode(code), mPort(port), mPtr(ptr) {};
-    int mCode;
-    int mPort;
-
-    Server *mPtr;
 };
 
 #endif

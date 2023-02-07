@@ -4,6 +4,8 @@
 
 #include "questions.hpp"
 #include "server.hpp"
+#include "auxilaries.hpp"
+
 #include <poll.h>
 
 #include <vector>
@@ -42,8 +44,7 @@ private:
     int mTimePerQuestion;
 
     std::vector<Questions> mQuestions;
-    std::map<std::string, double> mPunctation;
-    std::map<int, std::string> mNicks;
+    std::vector<Player> mPlayers;
 
     bool mTrafficClosed;
     bool mGotAllAnswers;

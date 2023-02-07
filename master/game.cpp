@@ -72,7 +72,7 @@ void Game::runTheGame()
         mGotAllAnswers = false;
         mCurrentCorrectAnswer = "";
 
-        broadcastMessage(std::string("question:") + question.getQuestionBody() + std::to_string(":"));
+        broadcastMessage(std::string("question:") + question.getQuestionBody() + std::string(":"));
 
         std::string answers = "answer:";
         for (auto& answer : question.getAnswers())
@@ -98,8 +98,8 @@ void Game::runTheGame()
 void Game::broadcastPunctation()
 {
     std::string msg = "punctation:";
-    for (auto& punct : mPunctation)
-        msg = msg + punct.first + ":" + std::to_string(punct.second) + ":";
+    for (auto& player : mPlayers)
+        msg = msg + player.mNick + ":" + std::to_string(player.mScore) + ":";
 
     broadcastMessage(msg);
 }
@@ -108,12 +108,14 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
 {
     using namespace std::chrono;
 
-    const int twoThirds = std::ceil(static_cast<double>(2 * mPunctation.size()) / 3);
+    const int twoThirds = std::ceil(static_cast<double>(2 * mPlayers.size()) / 3);
     int elapsed = high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint;
 
     if ((elapsed < mTimePerQuestion) && (mAnswersNum < twoThirds))
     {
-        mPunctation[msg[1]] += calculatePoints(msg);
+        auto it = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mNick == msg[0];});
+        if (it != mPlayers.end())
+            it->mScore += calculatePoints(msg);
         mAnswersNum++;
     }
     else
@@ -161,8 +163,8 @@ void Game::handleResponse(const int& fd)
 
 void Game::broadcastMessage(const std::string& msgBody)
 {
-    for (auto &client : mNicks)
-        sendMessage(client.first, msgBody);
+    for (auto &player : mPlayers)
+        sendMessage(player.mFd, msgBody);
 }
 
 bool Game::acceptClient()
@@ -217,7 +219,9 @@ std::vector<std::string> Game::receiveMessage_correctSizeOnly(const int fd, cons
 bool Game::addPlayer(const int clientFd)
 {
     auto nickMsg = receiveMessage_correctSizeOnly(clientFd, 1);
-    if (mPunctation.find(nickMsg[0]) != mPunctation.end())
+
+    auto it = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mNick == nickMsg[0];});
+    if (it != mPlayers.end())
     {
         sendMessage(clientFd, std::string("rejected:"));
         log(std::string("Player ") + nickMsg[0] + std::string(" rejected"));
@@ -225,8 +229,7 @@ bool Game::addPlayer(const int clientFd)
         return false;
     }
         
-    mPunctation[nickMsg[0]] = 0;
-    mNicks[clientFd] = nickMsg[0];
+    mPlayers.push_back(Player(clientFd, 0.0, nickMsg[0]));
 
     sendMessage(clientFd, std::string("accepted:"));
     log(std::string("Player ") + nickMsg[0] + std::string(" accepted"));
@@ -239,9 +242,9 @@ bool Game::addPlayer(const int clientFd)
 void Game::sendAllNicks()
 {
     std::string allNicks = "allNicks:";
-    for (auto& nick : mNicks)
+    for (auto& player : mPlayers)
     {
-        allNicks += nick.second + ":";
+        allNicks += player.mNick + ":";
     }
 
     broadcastMessage(allNicks);
@@ -313,12 +316,9 @@ void Game::removeClient(const int fd)
         else
             log("Error while removing client from the polling list");
 
-        auto it2 = mNicks.find(fd);
-        if (it2 != mNicks.end())
-        {
-            mNicks.erase(it2);
-            mPunctation.erase(mPunctation.find(it2->second));
-        }
+        auto it2 = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mFd == fd;});
+        if (it2 != mPlayers.end())
+            mPlayers.erase(it2);
 
         sendAllNicks();
         log("Client disconnected");
