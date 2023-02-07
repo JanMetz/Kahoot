@@ -13,7 +13,6 @@
 #include <map>
 #include <array>
 
-
 Game::Game(const long port, const long motherPort) : Server(port), mTrafficClosed(false), mMotherPort(motherPort)
 {
     if (!establishConnection())
@@ -254,7 +253,7 @@ void Game::setupGame()
 
     const int hostFd = mPolls.at(1).fd;
     auto setupMsg = receiveMessage_correctSizeOnly(hostFd, 2);
-
+    
     const int questionsNum = std::stoi(setupMsg[0]);
     mTimePerQuestion = std::stoi(setupMsg[1]);
 
