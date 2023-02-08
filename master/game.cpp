@@ -312,27 +312,29 @@ void Game::removeClient(const int fd)
     }
     else
     {
+        std::string nick("");
+        auto it2 = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mFd == fd;});
+        if (it2 != mPlayers.end())
+        {
+            nick = it2->mNick;
+            mPlayers.erase(it2);
+            log(std::string("Client ") + nick + std::string(" erased from the players lists");
+        }
+        else
+            log("Warning: clients fd not found in the players list");
+
         auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
         if (it != mPolls.end())
         {
             mPolls.erase(it);
-            log("Client erased from the polling lists");
+             log(std::string("Client ") + nick + std::string(" erased from the polling lists");
         }
         else
             log("Warning: clients fd not found in the polling list");
-
-        auto it2 = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mFd == fd;});
-        if (it2 != mPlayers.end())
-        {
-            mPlayers.erase(it2);
-            log("Client erased from the players lists");
-        }
-        else
-            log("Warning: clients fd not found in the players list");
         
         shutdown(fd, SHUT_RD);
         close(fd);
-        log("Client disconnected");
+         log(std::string("Client ") + nick + std::string(" disconnected");
 
         sendAllNicks();
     }
