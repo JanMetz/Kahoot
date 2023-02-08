@@ -59,7 +59,7 @@ bool Server::setupSocket()
     mSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(mSock == -1)
     {
-        log("Socket failed");
+        log("Error: Socket failed");
         return false;
     }
 
@@ -75,14 +75,14 @@ bool Server::openConnection()
 {
     if(bind(mSock, (sockaddr*) &mAddrStruct, sizeof(mAddrStruct)))
     {
-        log("bind failed");
+        log("Error: bind failed");
         return false;
     }
 
     const int connectionsNum = 5;
     if(listen(mSock, connectionsNum))
     {
-        log("listen failed");
+        log("Error: listen failed");
         return false;
     }
 
@@ -113,7 +113,7 @@ bool Server::acceptClient()
     int clientFd = accept(mSock, nullptr, nullptr);
     if(clientFd == -1)
     {
-        log("accept failed");
+        log("Error: accept failed");
         return false;
     }
 
@@ -139,7 +139,10 @@ void Server::handleResponse(const int& fd)
         log("Join request received");
         auto it = findGame(std::stoi(message[1]));
         if ((it != mCreatedGames.end()) && (it->mPtr->isUp()))
+        {
             sendMessage(fd, std::string("gamePort:") + std::to_string(it->mPort) + std::string(":"));
+            log("Client redirected to game server");
+        }
         else
             sendMessage(fd, std::string("invalidCode:"));  
     }
@@ -161,7 +164,7 @@ void Server::handleResponse(const int& fd)
                 if (!game->isUp())
                 {
 					delete game;
-                    log(std::string("Unable to set the game up"));
+                    log(std::string("Error: Unable to set the game up"));
 					continue;
 				}
 				
@@ -180,7 +183,7 @@ void Server::handleResponse(const int& fd)
             catch (...)
             {
                 delete game;
-                log(std::string("Cannot assign port ") + std::to_string(port));
+                log(std::string("Error: Cannot assign port ") + std::to_string(port));
             }
         }
     }
@@ -197,7 +200,7 @@ void Server::handleResponse(const int& fd)
             log("Game deleted");
         }
         else
-            log("Error: cannot delete game! Invalid port number provided.");
+            log("Warning: cannot delete game! Invalid port number provided.");
     }
 }
 
@@ -208,25 +211,24 @@ std::vector<GamePointer>::const_iterator Server::findGame(const int code) const
 
 void Server::removeClient(const int fd)
 {
-    if (fcntl(fd, F_GETFD) != -1)
-    {
-        shutdown(fd, SHUT_RD);
-        close(fd);
-
-        log("Clients' connection closed");
-    }
-    else
-        log("Error while shutting down connection: clients' file descriptor is invalid");
-
-
     auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
     if (it != mPolls.end())
     {
         mPolls.erase(it);
-        log("Client removed from polling list");
+        log("Client erased from the polling lists");
     }
     else
-        log("Error while removing client from polling list");
+        log("Warning: clients fd not found in the polling list");
+
+
+    if (fcntl(fd, F_GETFD) != -1  || errno != EBADF)
+    {
+        shutdown(fd, SHUT_RD);
+        close(fd);
+        log("Client disconnected");
+    }
+    else
+        log("Warning: clients fd is invalid");
 }
 
 void Server::sendMessage(const int fd, const std::string& msgBody)
@@ -282,7 +284,7 @@ void Server::run()
     {
         if (poll(mPolls.data(), mPolls.size(), -1) == -1)
         {
-			log("Poll failed");
+			log("Warning: poll failed");
             continue;
         }
 

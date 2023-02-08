@@ -36,13 +36,13 @@ void Game::notifyOwnerAboutClosing()
     int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(sock == -1)
     {
-        log("Socket to mother failed");
+        log("Error: socket failed");
         return;
     }
 
     if(connect(sock, (sockaddr*) &addrStruct, sizeof(addrStruct)))
     {
-        log("Connect to mother failed");
+        log("Error: connect to mother failed");
         return;
     }
 
@@ -52,7 +52,7 @@ void Game::notifyOwnerAboutClosing()
     char* char_array = new char[msgBody.length() + 1];
     strcpy(char_array, msgBody.data());
     if (write(sock, char_array, strlen(char_array)) == -1)
-        log("Error while sending data.");
+        log("Error: sending data not successful");
 
     delete char_array;
 
@@ -170,12 +170,15 @@ void Game::broadcastMessage(const std::string& msgBody)
 bool Game::acceptClient()
 {
     if (mTrafficClosed)
+    {
+        log(std::string("Warning: connection request rejected - traffic is closed"));
         return false;
+    }
 
     int clientFd = accept(mSock, nullptr, nullptr);
     if (clientFd == -1)
     {
-        log(std::string("Accept failed"));
+        log(std::string("Error: accept failed"));
         return false;
     }
 
@@ -209,7 +212,7 @@ std::vector<std::string> Game::receiveMessage_correctSizeOnly(const int fd, cons
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
         if (poll(&client, 1, -1) == -1)
-            log("Error trying to poll");
+            log("Error: poll failed");
     }
     while((!(client.revents & POLLIN)) || (!receiveMessage(fd, size, message)));
 
@@ -241,6 +244,8 @@ bool Game::addPlayer(const int clientFd)
 
 void Game::sendAllNicks()
 {
+    log(std::string("Broadcasting all nicks"));
+
     std::string allNicks = "allNicks:";
     for (auto& player : mPlayers)
     {
@@ -301,27 +306,40 @@ void Game::removeClient(const int fd)
     if (fd == mPolls[1].fd)
     {
         mRun = false;
-        log("Host disconnected from the game");
+        log("Error: Host disconnected from the game");
         broadcastMessage(std::string("Error! Terminating game:"));
         closeConnection();
     }
     else
     {
-        shutdown(fd, SHUT_RD);
-        close(fd);
-
         auto it = std::find_if(mPolls.begin(), mPolls.end(), [&](const pollfd &poll){return poll.fd == fd;});
         if (it != mPolls.end())
+        {
             mPolls.erase(it);
+            log("Client erased from the polling lists");
+        }
         else
-            log("Error while removing client from the polling list");
+            log("Warning: clients fd not found in the polling list");
 
         auto it2 = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mFd == fd;});
         if (it2 != mPlayers.end())
+        {
             mPlayers.erase(it2);
+            log("Client erased from the players lists");
+        }
+        else
+            log("Warning: clients fd not found in the players list");
+        
+        if (fcntl(fd, F_GETFD) != -1  || errno != EBADF)
+        {
+            shutdown(fd, SHUT_RD);
+            close(fd);
+            log("Client disconnected");
+        }
+        else
+            log("Warning: clients fd is invalid");
 
         sendAllNicks();
-        log("Client disconnected");
     }
 }
 
@@ -331,7 +349,7 @@ void Game::run()
     {
         if (poll(mPolls.data(), mPolls.size(), -1) == -1)
         {
-			log("Poll failed");
+			log("Error: poll failed");
             continue;
         }
 
