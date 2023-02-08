@@ -330,14 +330,9 @@ void Game::removeClient(const int fd)
         else
             log("Warning: clients fd not found in the players list");
         
-        if (fcntl(fd, F_GETFD) != -1  || errno != EBADF)
-        {
-            shutdown(fd, SHUT_RD);
-            close(fd);
-            log("Client disconnected");
-        }
-        else
-            log("Warning: clients fd is invalid");
+        shutdown(fd, SHUT_RD);
+        close(fd);
+        log("Client disconnected");
 
         sendAllNicks();
     }

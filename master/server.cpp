@@ -220,15 +220,9 @@ void Server::removeClient(const int fd)
     else
         log("Warning: clients fd not found in the polling list");
 
-
-    if (fcntl(fd, F_GETFD) != -1  || errno != EBADF)
-    {
-        shutdown(fd, SHUT_RD);
-        close(fd);
-        log("Client disconnected");
-    }
-    else
-        log("Warning: clients fd is invalid");
+    shutdown(fd, SHUT_RD);
+    close(fd);
+    log("Client disconnected");
 }
 
 void Server::sendMessage(const int fd, const std::string& msgBody)
