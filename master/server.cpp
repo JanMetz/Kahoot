@@ -245,6 +245,9 @@ bool Server::receiveMessage(const int fd, const size_t minSize, std::vector<std:
         log("Error while receiving message");
         return false;
     }
+
+    if (len == 0)
+        removeClient(fd);
 	
     auto s = std::string(answer, len);
 

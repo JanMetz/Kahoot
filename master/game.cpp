@@ -153,6 +153,7 @@ void Game::handleResponse(const int& fd)
     if ((message[0] == "startTheGame") && (fd == mPolls[1].fd))
     {
         std::thread th(&Game::runTheGame, this);
+        th.detach();
     }
 
     if (message[0] == "leaveTheGame")
