@@ -82,6 +82,7 @@ void QuestionScreen::socketReadable(){
     qDebug() << msg;
     QStringList list = msg.split(":");    
     if(list[0] == "question") {
+        if(scoresScreen != nullptr) scoresScreen->show();
         ui->textQuestion->setText(list[1]);
         ui->buttonA->setText(list[3]);
         ui->buttonB->setText(list[4]);
@@ -90,22 +91,13 @@ void QuestionScreen::socketReadable(){
         enableButtons(true);
     }
     else if (list[0] == "punctation"){
-        finalList = list;
-        if(scoresScreen) {
-            scoresScreen->close();
-            delete scoresScreen;
-        }
-        scoresScreen = new CurrentScores(this, list);
-        this->hide();
-        scoresScreen->show();
+        finalList = list;        
+        scoresScreen = new CurrentScores(list);
     }
     else if (list[0] == "theGameEnds") {
         sock->disconnectFromHost();
         sock->close();
-        if(scoresScreen) {
-            scoresScreen->close();
-            delete scoresScreen;
-        }
+        scoresScreen->close();
         scoresScreen = new scores(mainWindow, finalList);
         scoresScreen->show();
         this->close();
