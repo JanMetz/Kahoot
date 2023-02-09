@@ -46,7 +46,7 @@ private:
     std::vector<Player> mPlayers;
 
     bool mTrafficClosed;
-    bool mGotAllAnswers;
+    volatile bool mGotAllAnswers;
     bool mRun;
     int mAnswersNum;
     long mMotherPort;
