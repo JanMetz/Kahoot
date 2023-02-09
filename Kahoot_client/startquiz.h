@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QMainWindow>
 #include <QTcpSocket>
+#include <QMessageBox>
 #include "gamestate.h"
 
 namespace Ui {

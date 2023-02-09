@@ -6,6 +6,7 @@ createQuiz::createQuiz(QMainWindow* m, QWidget *parent) :
     ui(new Ui::createQuiz), mainWindow(m)
 {
     ui->setupUi(this);
+    setAttribute(Qt::WA_DeleteOnClose);
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     connect(ui->buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
 }

@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QTcpSocket>
 #include "scores.h"
+#include "currentscores.h"
 
 namespace Ui {
 class QuestionScreen;
@@ -15,15 +16,20 @@ class QuestionScreen : public QWidget
     Q_OBJECT
 
 public:
-    explicit QuestionScreen(QMainWindow *m, QTcpSocket* s, QWidget *parent = nullptr);
+    explicit QuestionScreen(QMainWindow *m, QTcpSocket* s, QString n, int num, QWidget *parent = nullptr);
     ~QuestionScreen();
 
 private:
     Ui::QuestionScreen *ui;
     QMainWindow *mainWindow;
     QTcpSocket * sock ;
+    QString nick;
+    bool end;
+    int numPlayers;
     void socketDisconnected();
     void socketReadable();
+    QString generateAnswer(QString answerBody);
+    void enableButtons(bool f);
 };
 
 #endif // QUESTIONSCREEN_H

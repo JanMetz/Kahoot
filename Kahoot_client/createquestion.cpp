@@ -5,6 +5,7 @@ createQuestion::createQuestion(QMainWindow* m, int n, int t, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::createQuestion)
 {
+    setAttribute(Qt::WA_DeleteOnClose);
     mainWindow = m;
     numberOfQuestions = n;
     time = t;
@@ -27,8 +28,8 @@ createQuestion::createQuestion(QMainWindow* m, int n, int t, QWidget *parent) :
             msgBox.setInformativeText("Text fields cannot be empty.");
             msgBox.setIcon(QMessageBox::Warning);
             msgBox.setStyleSheet("background:white");
-            //msgBox.exec();
-            //return;
+            msgBox.exec();
+            return;
         }
         questions.push_back({ui->Question->toPlainText(),
             ui->answerA->toPlainText(), ui->answerB->toPlainText(),

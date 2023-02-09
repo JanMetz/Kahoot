@@ -12,15 +12,20 @@ StartQuiz::StartQuiz(QMainWindow* m, QTcpSocket* s, int c, QWidget *parent) :
     connect(sock, &QTcpSocket::disconnected, this, &StartQuiz::socketDisconnected);
     connect(sock, &QTcpSocket::readyRead, this, &StartQuiz::socketReadable);
     connect(ui->startButton, &QPushButton::clicked, this, [&]{
-        QString msg = QString("startTheGame");
+        QString msg = QString("startTheGame:");
         sock->write(msg.toUtf8());
-        QWidget *wdg = new GameState(mainWindow, sock);
+        disconnect(sock, &QTcpSocket::disconnected, this, &StartQuiz::socketDisconnected);
+        disconnect(sock, &QTcpSocket::readyRead, this, &StartQuiz::socketReadable);
+        int numPlayers = ui->listWidget->count();
+        QWidget *wdg = new GameState(mainWindow, sock, numPlayers);
         wdg->show();
         this->close();
     });
     connect(ui->cancelButton, &QPushButton::clicked, this, [&]{
-        if(sock)
+        if(sock) {
+            sock->disconnectFromHost();
             sock->close();
+        }
         mainWindow->show();
         this->close();
     });    
@@ -48,13 +53,20 @@ void StartQuiz::removePlayer(QString player){
 }
 
 void StartQuiz::socketDisconnected(){
-    mainWindow->show();
-    this->close();
+    qDebug() << "disconnected";
 }
-
-
 
 void StartQuiz::socketReadable(){
     QByteArray ba = sock->readAll();
-    addPlayer(QString(ba));
+    QString msg = QString(ba);
+    qDebug() << msg;
+    QStringList list = msg.split(":");    
+    for(int i = 0; i < list.length(); i++) {
+        if(list[i] == "allNicks"){
+            ui->listWidget->clear();
+            continue;
+        }
+        if(list[i] == "creator") continue;
+        addPlayer(list[i]);
+    }
 }
