@@ -96,6 +96,8 @@ void Game::runTheGame()
         }
 
         broadcastPunctation();  
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
     }
 
     broadcastMessage(std::string("theGameEnds:"));
@@ -117,15 +119,14 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
 {
     using namespace std::chrono;
 
-    const int twoThirds = std::ceil(static_cast<double>(2 * mPlayers.size()) / 3);
-    int elapsed = static_cast<int>((std::chrono::high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint) / 1000000000); // from nanoseconds to seconds
+    const int twoThirds = std::round(static_cast<double>(2 * mPlayers.size()) / 3);
+    int elapsed = static_cast<int>((high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint) / 1000000000); // from nanoseconds to seconds
 
-    if ((elapsed < mTimePerQuestion) && (mAnswersNum < twoThirds))
+    if ((elapsed < mTimePerQuestion) && (mAnswersNum <= twoThirds))
     {
         auto it = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mNick == msg[2];});
         if (it != mPlayers.end())
-            it->mScore += calculatePoints(msg);
-        mAnswersNum++;
+            it->mScore += calculatePoints(msg); 
     }
     else
         mGotAllAnswers = true;
@@ -154,8 +155,9 @@ void Game::handleResponse(const int& fd)
         log("Received invalid request");
     }
 
-    if ((message.size() > 2) && (message[0] == "answer"))
+    if ((message.size() > 3) && (message[0] == "answer"))
     {
+        mAnswersNum++;
         extractAnswer(message);
     }
 
