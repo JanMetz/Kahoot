@@ -111,14 +111,15 @@ void Game::broadcastPunctation()
     for (auto& player : mPlayers)
         msg = msg + player.mNick + ":" + std::to_string(player.mScore) + ":";
 
+    log(msg); // DO USUNIĘCIA PO DEBUGU
     broadcastMessage(msg);
 }
 
-void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowiedzi Token:OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
+void Game::extractAnswer(const std::vector<std::string>& msg)  // answer format Token:AnswerText:PlayersNick:Timestamp:
 {
     using namespace std::chrono;
 
-    const int twoThirds = std::round(static_cast<double>(2 * mPlayers.size()) / 3);
+    const int twoThirds = std::round(static_cast<double>(2 * (mPlayers.size() - 1)) / 3); // calculate without the game host
     int elapsed = static_cast<int>((std::stol(msg[3]) - mBroadcastTimepoint) / 1000000000); // from nanoseconds to seconds
 
     if ((elapsed < mTimePerQuestion) && (mAnswersNum <= twoThirds) && (mCurrentCorrectAnswer == msg[1]))
