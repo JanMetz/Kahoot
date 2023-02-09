@@ -25,6 +25,10 @@ Za każdą poprawną odpowiedź naliczane są punkty liczone wzorem 1000 * x, gd
 Serwer obsługuje wiele quizów naraz. 
 Po wyczerpaniu się listy pytań wyświetlany jest zwycięzca.
 
+Serwer został napisany z wykorzystaniem BSD sockets, w języku C++, standardzie C++17.
+Klient został napisany z wykorzystaniem biblioteki Qt w wersji 6.4, w języku C++. 
+Klient komunikuje się z serwerem wykorzystując funkcje biblioteki Qt. Graficzna strona rozgrywki obsłużona jest również za pomocą Qt.
+
 ## Serwer - instalacja (Linux)
 ```
 g++ -std=c++17 -o server.exe main.cpp server.cpp game.cpp questions.cpp -lpthread
