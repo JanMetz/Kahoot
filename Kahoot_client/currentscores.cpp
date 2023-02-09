@@ -9,7 +9,7 @@ CurrentScores::CurrentScores(QWidget* q, QStringList scores, QWidget *parent) :
     questionScreen = q;
     setAttribute(Qt::WA_DeleteOnClose);
     for(int i = 3; i < scores.length() - 1; i += 2) {
-        addPlayer(scores[i] + QString(":") + scores[i+1]);
+        addPlayer(scores[i] + QString(":") + scores[i+1].left(4));
     }
 }
 

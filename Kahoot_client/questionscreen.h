@@ -24,8 +24,9 @@ private:
     QMainWindow *mainWindow;
     QTcpSocket * sock ;
     QString nick;
-    bool end;
     int numPlayers;
+    QStringList finalList;
+    QWidget* scoresScreen {nullptr};
     void socketDisconnected();
     void socketReadable();
     QString generateAnswer(QString answerBody);

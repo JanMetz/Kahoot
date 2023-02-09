@@ -62,6 +62,7 @@ void Lobby::socketReadable(){
         ui->listWidget->clear();
         for(int i = 2; i < list.length(); i++) {
             if(list[i] == "allNicks") break;
+            if(list[i] == "") continue;
             addPlayer(list[i]);
         }
     }

@@ -11,7 +11,8 @@ QuestionScreen::QuestionScreen(QMainWindow *m, QTcpSocket* s, QString n, int num
     sock = s;
     nick = n;
     numPlayers = num;
-    end = false;
+    qDebug()<<numPlayers;
+    if(sock->bytesAvailable() > 0) socketReadable();
     connect(sock, &QTcpSocket::disconnected, this, &QuestionScreen::socketDisconnected);
     connect(sock, &QTcpSocket::readyRead, this, &QuestionScreen::socketReadable);
     connect(ui->exitButton, &QPushButton::clicked, this, [&]{
@@ -71,13 +72,14 @@ void QuestionScreen::socketReadable(){
        return;
     } else if (p[0] == "punctation") {
         QString buffer = "";
-        for(int i = 0; i < 2 * numPlayers + 1; i++) {
+        for(int i = 0; i < 2 * numPlayers + 3; i++) {
             buffer += p[i] + ":";
         }
         bytesToRead = buffer.size();
     }
     QByteArray ba = sock->read(bytesToRead);
-    QString msg = QString(ba);    
+    QString msg = QString(ba);
+    qDebug() << msg;
     QStringList list = msg.split(":");    
     if(list[0] == "question") {
         ui->textQuestion->setText(list[1]);
@@ -88,21 +90,27 @@ void QuestionScreen::socketReadable(){
         enableButtons(true);
     }
     else if (list[0] == "punctation"){
-        if(end) {
-            sock->disconnectFromHost();
-            sock->close();
-            QWidget *wdg = new scores(mainWindow, list);
-            wdg->show();
-            this->close();
-        } else {           
-            QWidget *wdg = new CurrentScores(this, list);
-            this->hide();
-            wdg->show();
+        finalList = list;
+        if(scoresScreen) {
+            scoresScreen->close();
+            delete scoresScreen;
         }
+        scoresScreen = new CurrentScores(this, list);
+        this->hide();
+        scoresScreen->show();
     }
     else if (list[0] == "theGameEnds") {
-        end = true;
+        sock->disconnectFromHost();
+        sock->close();
+        if(scoresScreen) {
+            scoresScreen->close();
+            delete scoresScreen;
+        }
+        scoresScreen = new scores(mainWindow, finalList);
+        scoresScreen->show();
+        this->close();
     }
+    if(sock->bytesAvailable() > 0) socketReadable();
 }
 
 void QuestionScreen::enableButtons(bool f){

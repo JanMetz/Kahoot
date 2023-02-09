@@ -12,7 +12,6 @@ GameState::GameState(QMainWindow* m, QTcpSocket* s, int num, QWidget *parent) :
     numPlayers = num;
     connect(sock, &QTcpSocket::readyRead, this, &GameState::socketReadable);
     connect(sock, &QTcpSocket::disconnected, this, &GameState::socketDisconnected);
-    end = false;
 }
 
 GameState::~GameState()
@@ -27,10 +26,21 @@ void GameState::socketReadable(){
     int bytesToRead = sock->bytesAvailable();
     QStringList p = QString(sock->peek(bytesToRead)).split(":");
     qDebug() << p;
-    //TODO:theGameStarts, question
+    if(p[0] == "theGameStarts") {
+        bytesToRead = 14;
+    }
+    if(p[0] == "question" && p.size() < 7){
+        return;
+    } else if (p[0] == "question") {
+        QString buffer = "";
+        for(int i = 0; i < 7; i++) {
+            buffer += p[i] + ":";
+        }
+        bytesToRead = buffer.size();
+    }
     if (p[0] == "punctation") {
          QString buffer = "";
-         for(int i = 0; i < 2 * numPlayers + 1; i++) {
+         for(int i = 0; i < 2 * numPlayers + 3; i++) {
              buffer += p[i] + ":";
             }
          bytesToRead = buffer.size();
@@ -40,22 +50,20 @@ void GameState::socketReadable(){
     qDebug() << msg;
     QStringList list = msg.split(":");
     if (list[0] == "punctation"){
-        if(end) {
-            sock->disconnectFromHost();
-            sock->close();
-            QWidget *wdg = new scores(mainWindow, list);
-            wdg->show();
-            this->close();
-        } else {
-            ui->listWidget->clear();
-            for(int i = 3; i < list.length() - 1; i += 2) {
-                addPlayer(list[i] + QString(":") + list[i+1]);
-            }
+        finalList = list;
+        ui->listWidget->clear();
+        for(int i = 3; i < list.length() - 1; i += 2) {
+            addPlayer(list[i] + QString(":") + list[i+1]);
         }
     }
     else if (list[0] == "theGameEnds") {
-        end = true;
+        sock->disconnectFromHost();
+        sock->close();
+        QWidget *wdg = new scores(mainWindow, finalList);
+        wdg->show();
+        this->close();
     }
+    if(sock->bytesAvailable() > 0) socketReadable();
 }
 
 void GameState::addPlayer(QString player){
