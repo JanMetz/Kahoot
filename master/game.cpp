@@ -102,7 +102,6 @@ void Game::runTheGame()
 
     broadcastMessage(std::string("theGameEnds:"));
     log(std::string("Game ended"));
-    broadcastPunctation();
     mRun = false;
 }
 

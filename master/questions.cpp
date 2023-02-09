@@ -26,10 +26,10 @@ std::string Questions::getQuestionBody() const
 
 void Questions::setCorrectAnswerIndex(const int index)
 {
-    if (mCorrectAnswerIndex >= NUMBER_OF_ANSWERS)
+    if (index > NUMBER_OF_ANSWERS)
         return;
 
-    mCorrectAnswerIndex = index;
+    mCorrectAnswerIndex = index - 1;
 }
 
 bool Questions::isCorrectAnswer(const std::string &answer)
