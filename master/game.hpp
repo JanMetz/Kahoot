@@ -24,7 +24,6 @@ public:
 
 private:
     void extractAnswer(const std::vector<std::string>& msg);
-    double calculatePoints(const std::vector<std::string>& msg) const;
 
     bool addPlayer(const int clientFd);
     void sendAllNicks();
