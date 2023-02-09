@@ -66,7 +66,7 @@ void StartQuiz::socketReadable(){
             ui->listWidget->clear();
             continue;
         }
-        if(list[i] == "creator") continue;
+        if(list[i] == "creator" || list[i] == "") continue;
         addPlayer(list[i]);
     }
 }

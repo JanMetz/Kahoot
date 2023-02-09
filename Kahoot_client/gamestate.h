@@ -22,8 +22,8 @@ private:
     Ui::GameState *ui;
     QMainWindow* mainWindow;
     QTcpSocket * sock {nullptr};
-    bool end;
     int numPlayers;
+    QStringList finalList;
     void socketDisconnected();
     void socketReadable();
     void addPlayer(QString player);
