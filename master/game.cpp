@@ -88,7 +88,7 @@ void Game::runTheGame()
         bool timesUp = false;
         while ((!mGotAllAnswers) && (!timesUp))
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+            std::this_thread::sleep_for(std::chrono::milliseconds(150));
             int elapsed = static_cast<int>((std::chrono::high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint) / 1000000000); // from nanoseconds to seconds
 
             if (elapsed >= mTimePerQuestion)
@@ -126,9 +126,10 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
     {
         auto it = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mNick == msg[2];});
         if (it != mPlayers.end())
-            it->mScore += calculatePoints(msg); 
+            it->mScore += calculatePoints(msg);   
     }
-    else
+    
+    if (mAnswersNum >= twoThirds)
         mGotAllAnswers = true;
 }
 
@@ -136,9 +137,9 @@ double Game::calculatePoints(const std::vector<std::string> &msg) const
 {
     if (mCurrentCorrectAnswer == msg[1]) //format odpowiedzi Token:OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
     {
-        int dur = std::stol(msg[3]) - mBroadcastTimepoint;
+        int dur = (std::stol(msg[3]) - mBroadcastTimepoint) / 1000000;
 
-        return (dur / mTimePerQuestion) * 1000;
+        return dur / mTimePerQuestion;
     }
 
     return 0.0;
