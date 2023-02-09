@@ -89,7 +89,7 @@ void Game::runTheGame()
         while ((!mGotAllAnswers) && (!timesUp))
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            int elapsed = high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint;
+            int elapsed = std::chrono::high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint;
 
             if (elapsed >= mTimePerQuestion)
                 timesUp = true;
