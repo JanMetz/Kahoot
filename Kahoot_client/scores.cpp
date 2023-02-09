@@ -9,7 +9,7 @@ scores::scores(QMainWindow *m, QStringList list, QWidget *parent) :
     setAttribute(Qt::WA_DeleteOnClose);
     mainWindow = m;
     for(int i = 3; i < list.length() - 1; i += 2) {
-        addPlayer(list[i] + QString(":") + list[i+1].left(4));
+        addPlayer(list[i] + QString(":") + list[i+1]);
     }
     connect(ui->exitButton, &QPushButton::clicked, this, [&]{
        mainWindow->show();

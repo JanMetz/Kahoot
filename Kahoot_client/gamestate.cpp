@@ -45,6 +45,16 @@ void GameState::socketReadable(){
             }
          bytesToRead = buffer.size();
     }
+    if (p[0] == "allNicks" && p.size() < numPlayers + 1) {
+        return;
+    } else if (p[0] == "allNicks") {
+        numPlayers--;
+        QString buffer = "";
+        for(int i = 0; i < numPlayers + 2; i++) {
+            buffer += p[i] + ":";
+        }
+        bytesToRead = buffer.size();
+    }
     QByteArray ba = sock->read(bytesToRead);
     QString msg = QString(ba);
     qDebug() << msg;

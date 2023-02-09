@@ -39,8 +39,9 @@ QuestionScreen::QuestionScreen(QMainWindow *m, QTcpSocket* s, QString n, int num
 
 QString QuestionScreen::generateAnswer(QString answerBody){
     enableButtons(false);
-    float timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    QString answer = QString("answer:") + answerBody + QString(":") + nick + QString(":") + QString::number(timestamp);
+    long timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    QString answer = QString("answer:") + answerBody + QString(":") + nick + QString(":") +
+            QString::fromStdString(std::to_string(timestamp));
     qDebug() << "answer: " << answer;
     return answer;
 }
@@ -73,6 +74,16 @@ void QuestionScreen::socketReadable(){
     } else if (p[0] == "punctation") {
         QString buffer = "";
         for(int i = 0; i < 2 * numPlayers + 3; i++) {
+            buffer += p[i] + ":";
+        }
+        bytesToRead = buffer.size();
+    }
+    if (p[0] == "allNicks" && p.size() < numPlayers + 1) {
+        return;
+    } else if (p[0] == "allNicks") {
+        numPlayers--;
+        QString buffer = "";
+        for(int i = 0; i < numPlayers + 2; i++) {
             buffer += p[i] + ":";
         }
         bytesToRead = buffer.size();

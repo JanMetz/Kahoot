@@ -8,7 +8,7 @@ CurrentScores::CurrentScores(QStringList scores, QWidget *parent) :
     ui->setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);
     for(int i = 3; i < scores.length() - 1; i += 2) {
-        addPlayer(scores[i] + QString(":") + scores[i+1].left(4));
+        addPlayer(scores[i] + QString(":") + scores[i+1]);
     }
 }
 
