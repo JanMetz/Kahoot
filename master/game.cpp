@@ -133,7 +133,7 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
 
 double Game::calculatePoints(const std::vector<std::string> &msg) const
 {
-    if (mCurrentCorrectAnswer == msg[0]) //format odpowiedzi Token:OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
+    if (mCurrentCorrectAnswer == msg[1]) //format odpowiedzi Token:OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
     {
         int dur = std::stol(msg[3]) - mBroadcastTimepoint;
 
