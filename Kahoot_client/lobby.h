@@ -22,11 +22,11 @@ private:
     Ui::Lobby *ui;
     QMainWindow* mainWindow;
     QTcpSocket * sock ;
-    bool closeSocket;
     void socketDisconnected();
     void socketReadable();
     void addPlayer(QString player);
     void removePlayer(QString plyayer);
+    QString yourNick;
 };
 
 #endif // LOBBY_H

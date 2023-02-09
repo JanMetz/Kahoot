@@ -13,7 +13,6 @@ GameState::GameState(QMainWindow* m, QTcpSocket* s ,QWidget *parent) :
 GameState::~GameState()
 {
     delete ui;
-    if(sock) sock->close();;
 }
 
 void GameState::socketDisconnected(){

@@ -28,8 +28,6 @@ ConnectScreen::ConnectScreen(QMainWindow* m, int n, int t,
     QTextStream in(&file);
     adres = in.readLine();
     port = in.readLine().toInt();
-    if(sock)
-        delete sock;
     sock = new QTcpSocket(this);
     connect(sock, &QTcpSocket::connected, this, &ConnectScreen::socketConnected);
     connectToServer(sock);
@@ -38,7 +36,7 @@ ConnectScreen::ConnectScreen(QMainWindow* m, int n, int t,
 void ConnectScreen::accept(){
     ui->buttonBox->setEnabled(false);
     connect(sock, &QTcpSocket::readyRead, this, [&]{
-        if(sock->bytesAvailable()<10) return;
+        if(sock->bytesAvailable() < minSize) return;
         qDebug() << "reading port";
         QByteArray ba = sock->readAll();
         QString msg = QString(ba);
@@ -49,8 +47,6 @@ void ConnectScreen::accept(){
         qDebug() << "port: " << port;
         sock->disconnectFromHost();
         sock->close();
-        //if(sock)
-        //    delete sock;
         sock = new QTcpSocket(this);
         connect(sock, &QTcpSocket::connected, this, &ConnectScreen::sendQuestions);
         connectToServer(sock);
@@ -140,7 +136,7 @@ void ConnectScreen::socketReadable(){
     QString msg = QString(ba);
     qDebug() << "received message: " << msg;
     if (msg != "sendQuestion:" && msg != "sendAnswer:" &&
-            msg != "provideCorrectMsgIndex") {
+            msg != "provideCorrectMsgIndex:") {
         qDebug() << "return " << msg;
         return;
     }
@@ -162,6 +158,10 @@ void ConnectScreen::socketReadable(){
         num++;
         i = 0;
         if (num >= numberOfQuestions) {
+            disconnect(sock, &QTcpSocket::readyRead, this, &ConnectScreen::socketReadable);
+            disconnect(sock, &QTcpSocket::disconnected, this, &ConnectScreen::socketDisconnected);
+            disconnect(sock, &QTcpSocket::errorOccurred, this, &ConnectScreen::socketError);
+            disconnect(sock, &QTcpSocket::connected, this, &ConnectScreen::sendQuestions);
             QWidget *wdg = new StartQuiz(mainWindow, sock, code);
             wdg->show();
             this->close();

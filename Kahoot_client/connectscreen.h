@@ -34,6 +34,7 @@ private:
     int code;
     int i;
     int num;
+    const int minSize = 10;
     std::vector<std::array<QString, 6>> questions;
     QString adres;
     QTcpSocket * sock {nullptr};

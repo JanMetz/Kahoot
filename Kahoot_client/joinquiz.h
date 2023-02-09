@@ -29,7 +29,6 @@ public slots:
 private:
     Ui::joinQuiz *ui;
     QMainWindow* mainWindow;
-    bool closeSocket;
 protected:
     QTcpSocket * sock {nullptr};
     QTimer * connTimeoutTimer{nullptr};

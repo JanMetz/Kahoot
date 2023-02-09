@@ -8,7 +8,6 @@ joinQuiz::joinQuiz(QMainWindow* m,QWidget *parent) :
     ui->setupUi(this);
     connect(ui->buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    closeSocket = true;
     ui->codeEdit->setValidator( new QIntValidator(0, 9999, this) );
 
     QFile file(":/config.txt");
@@ -30,17 +29,20 @@ void joinQuiz::accept() {
     ui->buttonBox->setEnabled(false);
     connect(sock, &QTcpSocket::readyRead, this, &joinQuiz::joinResponse);
     QString request = QString("joinGame:") + QString(ui->codeEdit->text());
+    qDebug() << "send: " << request;
     sock->write(request.toUtf8());
 }
 
 void joinQuiz::reject() {
+    if(sock) {
+        sock->disconnectFromHost();
+        sock->close();
+    }
     mainWindow->show();
     this->close();
 }
 
 joinQuiz::~joinQuiz() {
-    if(closeSocket && sock)
-        sock->close();
     delete ui;
 }
 
@@ -69,6 +71,7 @@ void joinQuiz::socketError(QTcpSocket::SocketError err){
 
 void joinQuiz::joinResponse(){
     QString message = QString(sock->readAll());
+    qDebug() << "joinReponse: " << message;
     QStringList list = message.split(":");
     if (list[0] != "gamePort"){
         if(list[0] == "invalidCode")
@@ -83,16 +86,24 @@ void joinQuiz::joinResponse(){
     connect(sock, &QTcpSocket::readyRead, this, &joinQuiz::nameResponse);
     connect(sock, &QTcpSocket::connected, this,[&]{sock->write(ui->nameEdit->text().toUtf8());});
     connectToServer();
-    //ui->codeEdit->setEnabled(false);
-    //connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(acceptName()));
 }
 
 void joinQuiz::nameResponse(){
     QString message = QString(sock->readAll());
+    qDebug() << "nameResponse: " << message;
     QStringList list = message.split(":");
     if(list[0] == "accepted") {
-        closeSocket = false;
-        QWidget *wdg = new Lobby(mainWindow, sock, ui->nameEdit->text(), list);
+        disconnect(sock, &QTcpSocket::readyRead, this, &joinQuiz::nameResponse);
+        disconnect(sock, &QTcpSocket::connected, this, &joinQuiz::socketConnected);
+        disconnect(sock, &QTcpSocket::disconnected, this, &joinQuiz::socketDisconnected);
+        disconnect(sock, &QTcpSocket::errorOccurred, this, &joinQuiz::socketError);
+        QStringList nicks;
+        for(int i = 3; i < list.length(); i++) {
+            if(list[i] == "allNicks")
+                break;
+            nicks.append(list[i]);
+        }
+        QWidget *wdg = new Lobby(mainWindow, sock, ui->nameEdit->text(), nicks);
         wdg->show();
         this->close();
     } else {
@@ -105,11 +116,6 @@ void joinQuiz::nameResponse(){
         connectToServer();
     }
 }
-
-//void joinQuiz::acceptName(){
-//    sock->write(ui->nameEdit->text().toUtf8());
-//    ui->buttonBox->setEnabled(false);
-//}
 
 void joinQuiz::connectToServer(){
     connTimeoutTimer = new QTimer(this);

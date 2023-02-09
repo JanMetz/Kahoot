@@ -1,12 +1,14 @@
 #include "currentscores.h"
 #include "ui_currentscores.h"
 
-CurrentScores::CurrentScores(QString scores, QWidget *parent) :
+CurrentScores::CurrentScores(QStringList scores, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::CurrentScores)
 {
     ui->setupUi(this);
-    addPlayer(scores);
+    for(int i = 3; i < scores.length() - 1; i += 2) {
+        addPlayer(scores[i] + QString(":") + scores[i+1]);
+    }
 }
 
 CurrentScores::~CurrentScores()
@@ -19,13 +21,4 @@ void CurrentScores::addPlayer(QString player){
     QListWidgetItem *item;
     item = new QListWidgetItem(player);
     ui->listWidget->addItem(item);
-}
-
-void CurrentScores::removePlayer(QString player){
-    QList<QListWidgetItem *> l;
-    l = ui->listWidget->findItems(player, Qt::MatchExactly);;
-    for(auto x: l){
-        ui->listWidget->removeItemWidget(x);
-        delete x;
-    }
 }
