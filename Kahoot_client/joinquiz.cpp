@@ -5,7 +5,7 @@ joinQuiz::joinQuiz(QMainWindow* m,QWidget *parent) :
     QWidget(parent), mainWindow(m),
     ui(new Ui::joinQuiz)
 {
-    ui->setupUi(this);
+    ui->setupUi(this);    
     connect(ui->buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     ui->codeEdit->setValidator( new QIntValidator(0, 9999, this) );

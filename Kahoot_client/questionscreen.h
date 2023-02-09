@@ -16,7 +16,7 @@ class QuestionScreen : public QWidget
     Q_OBJECT
 
 public:
-    explicit QuestionScreen(QMainWindow *m, QTcpSocket* s, QString n, QWidget *parent = nullptr);
+    explicit QuestionScreen(QMainWindow *m, QTcpSocket* s, QString n, int num, QWidget *parent = nullptr);
     ~QuestionScreen();
 
 private:
@@ -25,6 +25,7 @@ private:
     QTcpSocket * sock ;
     QString nick;
     bool end;
+    int numPlayers;
     void socketDisconnected();
     void socketReadable();
     QString generateAnswer(QString answerBody);

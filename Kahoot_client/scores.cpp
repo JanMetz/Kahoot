@@ -6,6 +6,7 @@ scores::scores(QMainWindow *m, QStringList list, QWidget *parent) :
     ui(new Ui::scores)
 {
     ui->setupUi(this);
+    setAttribute(Qt::WA_DeleteOnClose);
     mainWindow = m;
     for(int i = 3; i < list.length() - 1; i += 2) {
         addPlayer(list[i] + QString(":") + list[i+1]);

@@ -1,14 +1,16 @@
 #include "questionscreen.h"
 #include "ui_questionscreen.h"
 
-QuestionScreen::QuestionScreen(QMainWindow *m, QTcpSocket* s, QString n, QWidget *parent) :
+QuestionScreen::QuestionScreen(QMainWindow *m, QTcpSocket* s, QString n, int num, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QuestionScreen)
 {
     ui->setupUi(this);
+    setAttribute(Qt::WA_DeleteOnClose);
     mainWindow = m;
     sock = s;
     nick = n;
+    numPlayers = num;
     end = false;
     connect(sock, &QTcpSocket::disconnected, this, &QuestionScreen::socketDisconnected);
     connect(sock, &QTcpSocket::readyRead, this, &QuestionScreen::socketReadable);
@@ -53,14 +55,30 @@ void QuestionScreen::socketDisconnected(){
 }
 
 void QuestionScreen::socketReadable(){
-    QStringList p = QString(sock->peek(sock->bytesAvailable())).split(":");
-    if(p[0] == "question"){
-        if(p.size() < 7) return;
+    int bytesToRead = sock->bytesAvailable();
+    QStringList p = QString(sock->peek(bytesToRead)).split(":");
+    qDebug() << p;
+    if(p[0] == "question" && p.size() < 7){
+        return;
+    } else if (p[0] == "question") {
+        QString buffer = "";
+        for(int i = 0; i < 7; i++) {
+            buffer += p[i] + ":";
+        }
+        bytesToRead = buffer.size();
     }
-    QByteArray ba = sock->readAll();
-    QString msg = QString(ba);
-    qDebug() << msg;
-    QStringList list = msg.split(":");
+    if(p[0] == "punctation" && p.size() < 2 * numPlayers + 1) {
+       return;
+    } else if (p[0] == "punctation") {
+        QString buffer = "";
+        for(int i = 0; i < 2 * numPlayers + 1; i++) {
+            buffer += p[i] + ":";
+        }
+        bytesToRead = buffer.size();
+    }
+    QByteArray ba = sock->read(bytesToRead);
+    QString msg = QString(ba);    
+    QStringList list = msg.split(":");    
     if(list[0] == "question") {
         ui->textQuestion->setText(list[1]);
         ui->buttonA->setText(list[3]);
@@ -76,8 +94,9 @@ void QuestionScreen::socketReadable(){
             QWidget *wdg = new scores(mainWindow, list);
             wdg->show();
             this->close();
-        } else {
-            QWidget *wdg = new CurrentScores(list);
+        } else {           
+            QWidget *wdg = new CurrentScores(this, list);
+            this->hide();
             wdg->show();
         }
     }

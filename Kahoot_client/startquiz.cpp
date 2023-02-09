@@ -14,7 +14,10 @@ StartQuiz::StartQuiz(QMainWindow* m, QTcpSocket* s, int c, QWidget *parent) :
     connect(ui->startButton, &QPushButton::clicked, this, [&]{
         QString msg = QString("startTheGame:");
         sock->write(msg.toUtf8());
-        QWidget *wdg = new GameState(mainWindow, sock);
+        disconnect(sock, &QTcpSocket::disconnected, this, &StartQuiz::socketDisconnected);
+        disconnect(sock, &QTcpSocket::readyRead, this, &StartQuiz::socketReadable);
+        int numPlayers = ui->listWidget->count();
+        QWidget *wdg = new GameState(mainWindow, sock, numPlayers);
         wdg->show();
         this->close();
     });
@@ -57,12 +60,13 @@ void StartQuiz::socketReadable(){
     QByteArray ba = sock->readAll();
     QString msg = QString(ba);
     qDebug() << msg;
-    QStringList list = msg.split(":");
-    if(list[0] == "allNicks") {
-        ui->listWidget->clear();
-        for(int i = 2; i < list.length(); i++) {
-            if(list[i] == "allNicks") break;
-            addPlayer(list[i]);
+    QStringList list = msg.split(":");    
+    for(int i = 0; i < list.length(); i++) {
+        if(list[i] == "allNicks"){
+            ui->listWidget->clear();
+            continue;
         }
+        if(list[i] == "creator") continue;
+        addPlayer(list[i]);
     }
 }

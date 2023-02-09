@@ -34,14 +34,21 @@ void Lobby::socketDisconnected(){
     qDebug() << "disconnected";
 }
 void Lobby::socketReadable(){
-    QByteArray ba = sock->readAll();
+    int bytesToRead = sock->bytesAvailable();
+    QStringList p = QString(sock->peek(bytesToRead)).split(":");
+    qDebug() << p;
+    if(p[0] == "theGameStarts") {
+        bytesToRead = 14;
+    }
+    QByteArray ba = sock->read(bytesToRead);
     QString msg = QString(ba);
     qDebug() << msg;
     QStringList list = msg.split(":");
     if(list[0] == "theGameStarts") {
         disconnect(sock, &QTcpSocket::disconnected, this, &Lobby::socketDisconnected);
         disconnect(sock, &QTcpSocket::readyRead, this, &Lobby::socketReadable);
-        QWidget *wdg = new QuestionScreen(mainWindow, sock, yourNick);
+        int numPlayers = ui->listWidget->count();
+        QWidget *wdg = new QuestionScreen(mainWindow, sock, yourNick, numPlayers);
         wdg->show();
         this->close();
     }

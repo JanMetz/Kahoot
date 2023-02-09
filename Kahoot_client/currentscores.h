@@ -12,11 +12,12 @@ class CurrentScores : public QWidget
     Q_OBJECT
 
 public:
-    explicit CurrentScores(QStringList scores, QWidget *parent = nullptr);
+    explicit CurrentScores(QWidget* q ,QStringList scores, QWidget *parent = nullptr);
     ~CurrentScores();
 
 private:
     Ui::CurrentScores *ui;
+    QWidget* questionScreen;
     void addPlayer(QString player);
 };
 

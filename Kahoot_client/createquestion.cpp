@@ -5,6 +5,7 @@ createQuestion::createQuestion(QMainWindow* m, int n, int t, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::createQuestion)
 {
+    setAttribute(Qt::WA_DeleteOnClose);
     mainWindow = m;
     numberOfQuestions = n;
     time = t;
