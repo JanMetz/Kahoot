@@ -73,18 +73,27 @@ void Game::runTheGame()
         mCurrentCorrectAnswer = "";
 
         broadcastMessage(std::string("question:") + question.getQuestionBody() + std::string(":"));
+        log("Question sent");
 
         std::string answers = "answer:";
         for (auto& answer : question.getAnswers())
             answers += answer + ":";
 
         broadcastMessage(answers);
+        log("Possible options sent. Waiting for players answers");
 
         mCurrentCorrectAnswer = question.getCorrectAnswer();
         mBroadcastTimepoint = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         
-        while (!mGotAllAnswers)
+        bool timesUp = false;
+        while ((!mGotAllAnswers) && (!timesUp))
+        {
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
+            int elapsed = high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint;
+
+            if (elapsed >= mTimePerQuestion)
+                timesUp = true;
+        }
 
         broadcastPunctation();  
     }
@@ -104,7 +113,7 @@ void Game::broadcastPunctation()
     broadcastMessage(msg);
 }
 
-void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowiedzi OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
+void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowiedzi Token:OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
 {
     using namespace std::chrono;
 
@@ -113,7 +122,7 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
 
     if ((elapsed < mTimePerQuestion) && (mAnswersNum < twoThirds))
     {
-        auto it = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mNick == msg[0];});
+        auto it = std::find_if(mPlayers.begin(), mPlayers.end(), [&](const Player &player){return player.mNick == msg[2];});
         if (it != mPlayers.end())
             it->mScore += calculatePoints(msg);
         mAnswersNum++;
@@ -124,9 +133,9 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
 
 double Game::calculatePoints(const std::vector<std::string> &msg) const
 {
-    if (mCurrentCorrectAnswer == msg[0]) //format odpowiedzi OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
+    if (mCurrentCorrectAnswer == msg[0]) //format odpowiedzi Token:OdpowiedzTekstem:NickGracza:CzasOddaniaOdpowiedzi:
     {
-        int dur = std::stol(msg[2]) - mBroadcastTimepoint;
+        int dur = std::stol(msg[3]) - mBroadcastTimepoint;
 
         return (dur / mTimePerQuestion) * 1000;
     }
