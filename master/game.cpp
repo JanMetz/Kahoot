@@ -89,7 +89,7 @@ void Game::runTheGame()
         while ((!mGotAllAnswers) && (!timesUp))
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            int elapsed = std::chrono::high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint;
+            int elapsed = static_cast<int>((std::chrono::high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint) / 1000000000); // from nanoseconds to seconds
 
             if (elapsed >= mTimePerQuestion)
                 timesUp = true;
@@ -118,7 +118,7 @@ void Game::extractAnswer(const std::vector<std::string>& msg)  //format odpowied
     using namespace std::chrono;
 
     const int twoThirds = std::ceil(static_cast<double>(2 * mPlayers.size()) / 3);
-    int elapsed = high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint;
+    int elapsed = static_cast<int>((std::chrono::high_resolution_clock::now().time_since_epoch().count() - mBroadcastTimepoint) / 1000000000); // from nanoseconds to seconds
 
     if ((elapsed < mTimePerQuestion) && (mAnswersNum < twoThirds))
     {
